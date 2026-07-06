@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCOPE — Play</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--red:#E60028;--navy:#0b1b3f;--bg:#f4f6fb;--card:#fff;--line:#e8ecf3;--muted:#586074;--ok:#1b8a5a;--warn:#c77700;--c1:#2f6fb0;--c2:#d0443f;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Montserrat,system-ui,sans-serif;background:radial-gradient(1000px 480px at 50% -6%,#eef3fc 0%,rgba(238,243,252,0) 60%),linear-gradient(180deg,#f8fafd,#eef2f8);color:#0f1024;min-height:100vh;line-height:1.5;}
+.wrap{max-width:640px;margin:0 auto;padding:16px 14px 60px;}
+.hdr{background:var(--navy);color:#fff;border-radius:16px;padding:16px 18px;margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.hdr .role{font-size:20px;font-weight:800;}
+.hdr .chain{font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;background:rgba(255,255,255,.16);}
+.hdr .wk{margin-left:auto;text-align:right;font-size:12px;color:#c9cff0;}
+.hdr .wk b{font-size:20px;color:#fff;display:block;}
+.phase{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:20px;}
+.phase.order{background:#fff3cd;color:#8a5a00;}.phase.ship{background:#d1e7ff;color:#0b4f9e;}.phase.ended{background:#e8e8ef;color:#333;}.phase.lobby{background:#e6f6ee;color:var(--ok);}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px;}
+.card h2{font-size:14px;font-weight:800;color:var(--navy);margin-bottom:4px;}
+.card .sub{font-size:12px;color:var(--muted);margin-bottom:12px;}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+@media(max-width:520px){.stats{grid-template-columns:1fr 1fr;}}
+.stat{background:#f6f8fd;border:1px solid var(--line);border-radius:11px;padding:10px;text-align:center;}
+.stat .v{font-size:18px;font-weight:800;color:var(--navy);}.stat .k{font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:700;margin-top:2px;}
+.timer{font-size:14px;font-weight:800;background:rgba(255,255,255,.16);padding:5px 12px;border-radius:20px;min-width:66px;text-align:center;}
+label.f{display:block;font-size:12.5px;font-weight:700;color:#333;margin:12px 0 5px;}
+label.f .hint{color:var(--muted);font-weight:500;}
+input[type=number],input[type=text]{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:11px 12px;font-size:15px;font-family:inherit;}
+input:focus{outline:none;border-color:var(--navy);}
+.btn{border:none;border-radius:12px;padding:13px 18px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;width:100%;margin-top:14px;transition:transform .1s,opacity .2s;}
+.btn:active{transform:scale(.98);}
+.btn-red{background:var(--red);color:#fff;}.btn-navy{background:var(--navy);color:#fff;}.btn-ghost{background:#eef1f8;color:#333;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.alloc-row{display:grid;grid-template-columns:1fr 90px;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);}
+.alloc-row .who{font-size:13px;font-weight:700;}.alloc-row .req{font-size:11px;color:var(--muted);}
+.remain{font-size:13px;font-weight:800;margin-top:10px;}
+.remain.bad{color:var(--red);}
+.waiting{text-align:center;color:var(--muted);font-size:13px;padding:14px;}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#111;color:#fff;padding:11px 18px;border-radius:12px;font-size:13px;font-weight:600;opacity:0;transition:opacity .25s;z-index:50;max-width:90%;}
+.toast.show{opacity:.95;}
+.chatbox{max-height:180px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:8px;background:#fafbfe;font-size:12.5px;margin-bottom:8px;}
+.chatmsg{padding:3px 0;}.chatmsg b{color:var(--navy);}
+.chatrow{display:grid;grid-template-columns:96px 1fr auto;gap:8px;}
+.chatrow select,.chatrow input{padding:9px 10px;font-size:13px;}
+.chatrow .btn{width:auto;margin:0;padding:9px 14px;}
+.big-code{font-size:15px;}
+.join-card{max-width:440px;margin:8vh auto 0;}
+.seatpick{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+.seatbtn{border:1.5px solid var(--line);background:#fff;border-radius:11px;padding:10px;text-align:left;cursor:pointer;font-family:inherit;width:100%;margin:0;}
+.seatbtn:hover{border-color:var(--navy);}
+.seatbtn .r{font-weight:800;color:var(--navy);font-size:14px;}
+.seatbtn .t{font-size:10.5px;color:var(--muted);margin-top:2px;}
+.seatbtn.sel{border-color:var(--red);background:#fff5f7;}
+.seatbtn.taken{opacity:.55;cursor:not-allowed;background:#f6f8fd;}
+.seatbtn.taken .t{color:var(--red);}
+.mktgroup{font-size:12px;font-weight:800;color:var(--navy);margin:14px 0 2px;}
+.pill{display:inline-block;background:#eef1f8;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;color:var(--navy);margin-right:6px;}
+.end-hero{background:linear-gradient(135deg,var(--navy),#33338a);color:#fff;border-radius:16px;padding:24px;text-align:center;}
+.end-hero .p{font-size:40px;font-weight:800;margin:6px 0;}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script src="scope-client.js"></script>
+<script>
+var app=document.getElementById("app");
+if(typeof ScopeClient==="undefined"){app.innerHTML='<div class="card join-card"><h2>Files didn\'t load fully</h2><div class="sub" style="margin-top:8px;">Please hard-refresh this page (pull down to refresh on a phone). If it keeps happening, ask your instructor for the join link again.</div></div>';throw new Error("scope-client.js not loaded");}
+var client=new ScopeClient();
+var ME={role:null,tier:null,chain:null,tierName:null,joined:false};
+var LAST=null; // last "you" view
+
+function toast(t){var el=document.getElementById("toast");el.textContent=t;el.classList.add("show");clearTimeout(el._t);el._t=setTimeout(function(){el.classList.remove("show");},2600);}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function money(v){return "$"+Math.round(v).toLocaleString();}
+/* self-contained profit sparkline (handles negative profit; no library) */
+function profitChart(log){
+  var vals=(log||[]).map(function(l){return l.profit||0;});
+  if(vals.length<2) return "";
+  var W=300,Hh=90,pad=6;
+  var mx=Math.max.apply(null,vals),mn=Math.min.apply(null,vals);
+  if(mx===mn){mx+=1;mn-=1;}
+  var sx=function(i){return pad+i*(W-2*pad)/(vals.length-1);};
+  var sy=function(v){return pad+(mx-v)*(Hh-2*pad)/(mx-mn);};
+  var pts=vals.map(function(v,i){return sx(i)+","+sy(v);}).join(" ");
+  var zero=(mn<0&&mx>0)?'<line x1="'+pad+'" y1="'+sy(0)+'" x2="'+(W-pad)+'" y2="'+sy(0)+'" stroke="#c9d2e3" stroke-dasharray="3 3"/>':"";
+  var last=vals[vals.length-1],col=last>=0?"var(--ok)":"var(--red)";
+  return '<svg viewBox="0 0 '+W+' '+Hh+'" width="100%" height="90" preserveAspectRatio="none">'
+    +zero+'<polyline fill="none" stroke="'+col+'" stroke-width="2" points="'+pts+'"/>'
+    +'<circle cx="'+sx(vals.length-1)+'" cy="'+sy(last)+'" r="3" fill="'+col+'"/></svg>';
+}
+function fmtLeft(sec){sec=Math.max(0,sec);var m=Math.floor(sec/60),s=sec%60;return m>0?(m+":"+(s<10?"0":"")+s):(s+"s");}
+/* live countdown, synced to the server-stamped deadline (see backend stampDeadline).
+   Updates only the chip each second so it never disturbs a half-typed order. */
+function paintTimer(){
+  var el=document.getElementById("ptimer"); if(!el)return;
+  var v=LAST;
+  if(!v||(v.phase!=="order"&&v.phase!=="ship")){el.textContent="";el.style.display="none";return;}
+  el.style.display="";
+  if(v.deadline==null){el.textContent="⏱ no limit";return;}
+  var left=Math.round((v.deadline-Date.now())/1000);
+  el.textContent=left<=0?"⏱ time up":("⏱ "+fmtLeft(left));
+}
+setInterval(paintTimer,1000);
+
+/* ---------------- join: step 1 = your details ---------------- */
+var FORM={code:"",name:"",studentId:""};
+var SEATMAP=null;      // {code, markets:[{marketId,phase,seats:[...]}]}
+var PICK=null;         // {marketId, role}
+var TIER_LBL={S:"Supplier",M:"Manufacturer",D:"Distributor",W:"Wholesaler",R:"Retailer"};
+
+function renderJoin(prefillCode){
+  ME.joined=false;
+  app.innerHTML=
+  '<div class="card join-card">'
+  +'<h2 style="font-size:20px;">Join the SCOPE Game</h2>'
+  +'<div class="sub">Enter the code your instructor shared and your details, then pick your role.</div>'
+  +'<label class="f">Game code</label><input id="jcode" type="text" placeholder="e.g. K7P2" maxlength="6" value="'+esc(prefillCode||FORM.code||"")+'" style="text-transform:uppercase;letter-spacing:.15em;font-weight:800;">'
+  +'<label class="f">Your name</label><input id="jname" type="text" placeholder="First Last" maxlength="24" value="'+esc(FORM.name)+'">'
+  +'<label class="f">Student ID <span class="hint">(optional)</span></label><input id="jid" type="text" inputmode="numeric" placeholder="e.g. 3820115" maxlength="32" value="'+esc(FORM.studentId)+'">'
+  +'<button class="btn btn-navy" id="jbtn">Choose your role →</button>'
+  +'<div class="waiting" id="jstatus"></div>'
+  +'</div>';
+  document.getElementById("jbtn").onclick=doFindSeats;
+  document.getElementById("jid").addEventListener("keydown",function(e){if(e.key==="Enter")doFindSeats();});
+}
+function doFindSeats(){
+  var code=document.getElementById("jcode").value.trim().toUpperCase();
+  var name=document.getElementById("jname").value.trim();
+  var sid=document.getElementById("jid").value.trim();
+  if(!code){toast("Enter the game code");return;}
+  if(!name){toast("Enter your name");return;}
+  FORM={code:code,name:name,studentId:sid};
+  document.getElementById("jstatus").textContent="Finding open seats…";
+  client.send("seats",{code:code});
+}
+
+/* ---------------- join: step 2 = pick a role/seat ---------------- */
+function renderPicker(){
+  ME.joined=false;
+  var multi=(SEATMAP.markets.length>1);
+  var anyOpen=SEATMAP.markets.some(function(m){return m.seats.some(function(s){return s.open;});});
+  var h='<div class="card join-card">'
+    +'<h2 style="font-size:20px;">Choose your role</h2>'
+    +'<div class="sub">Game '+esc(SEATMAP.code)+' · '+esc(FORM.name)+(FORM.studentId?" · ID "+esc(FORM.studentId):"")+'. Pick an open seat'+(multi?" in any market":"")+'.</div>'
+    +'<button class="btn btn-navy" id="quickBtn">🎲 Quick assign — give me any open seat</button>'
+    +'<div class="sub" style="text-align:center;margin:10px 0 0;">or pick one'+(anyOpen?"":" — all seats are taken")+'</div>';
+  SEATMAP.markets.forEach(function(mk){
+    if(multi)h+='<div class="mktgroup">Market '+esc(mk.marketId.split("-").pop())+(mk.phase&&mk.phase!=="lobby"?' · in progress':'')+'</div>';
+    h+='<div class="seatpick">';
+    mk.seats.forEach(function(s){
+      var sel=PICK&&PICK.marketId===mk.marketId&&PICK.role===s.id;
+      if(s.open){
+        h+='<button class="seatbtn'+(sel?" sel":"")+'" data-mk="'+esc(mk.marketId)+'" data-id="'+esc(s.id)+'"><div class="r">'+esc(s.id)+'</div><div class="t">'+esc(s.tierName)+' · Chain '+s.chain+'</div></button>';
+      }else{
+        h+='<div class="seatbtn taken"><div class="r">'+esc(s.id)+'</div><div class="t">'+esc(s.name||"taken")+'</div></div>';
+      }
+    });
+    h+='</div>';
+  });
+  h+='<button class="btn btn-red" id="joinBtn"'+(PICK?"":" disabled")+'>Join game</button>'
+    +'<button class="btn btn-ghost" id="backBtn" style="margin-top:8px;">← Back</button>'
+    +'<div class="waiting" id="jstatus"></div>'
+    +'</div>';
+  app.innerHTML=h;
+  Array.prototype.forEach.call(document.querySelectorAll(".seatbtn[data-id]"),function(b){
+    b.onclick=function(){PICK={marketId:b.getAttribute("data-mk"),role:b.getAttribute("data-id")};renderPicker();};
+  });
+  document.getElementById("quickBtn").onclick=function(){PICK=null;client.send("join",{code:FORM.code,name:FORM.name,studentId:FORM.studentId});document.getElementById("jstatus").textContent="Joining…";};
+  document.getElementById("joinBtn").onclick=function(){
+    if(!PICK){toast("Pick a seat, or use Quick assign");return;}
+    client.send("join",{code:FORM.code,name:FORM.name,studentId:FORM.studentId,marketId:PICK.marketId,role:PICK.role});
+    document.getElementById("jstatus").textContent="Joining…";
+  };
+  document.getElementById("backBtn").onclick=function(){renderJoin(FORM.code);};
+}
+
+/* ---------------- main game screen ---------------- */
+function extras(v){
+  var c=v.cfg||{}, y=v.you, h="";
+  if(y.disrupted){ h+='<div class="card" style="border-color:var(--red);"><div class="sub">⚠ <b>Supply disruption this week</b> — you can\'t ship anything. It passes next week.</div></div>'; }
+  if(c.backorderOn && y.tier==="R" && y.backlog>0){ h+='<div class="card"><div class="sub">📦 <b>Back-orders:</b> '+y.backlog+' units owed to customers, carried to next week.</div></div>'; }
+  if(c.infoSharing){ h+='<div class="card"><div class="sub">📣 <b>Info sharing:</b> real customer demand — this week <b>'+(v.weekTotal||0)+'</b> · next week <b>'+(v.nextTotal||0)+'</b>.</div></div>'; }
+  if(c.bullwhipFeedback && y.log && y.log.length>1){
+    var ords=y.log.map(function(l){return l.order?(l.order.own+l.order.cross):0;}).slice(1);
+    if(ords.length>1){var m=ords.reduce(function(a,b){return a+b;},0)/ords.length;var vv=ords.reduce(function(a,b){return a+(b-m)*(b-m);},0)/ords.length;
+      h+='<div class="card"><div class="sub">📈 <b>Your order swing:</b> variance <b>'+Math.round(vv)+'</b> (avg order '+Math.round(m)+'). Steadier orders mean less bullwhip.</div></div>';}
+  }
+  return h;
+}
+function render(v){
+  LAST=v;
+  if(v.phase==="ended"){return renderEnd(v);}
+  var y=v.you;
+  var chainCol=y.chain===1?"var(--c1)":"var(--c2)";
+  var h=
+  '<div class="hdr">'
+  +'<span class="role">'+esc(y.id)+'</span>'
+  +'<span class="chain" style="background:'+chainCol+'">'+esc(y.tierName)+' · Chain '+y.chain+'</span>'
+  +'<span class="timer" id="ptimer" style="margin-left:auto;"></span>'
+  +'<span class="wk"><b>'+(v.week)+' / '+v.rounds+'</b>week</span>'
+  +'</div>';
+  if(y.name){ h+='<div class="sub" style="margin:-6px 0 12px 2px;">'+esc(y.name)+(y.studentId?' · ID '+esc(y.studentId):'')+'</div>'; }
+
+  // status
+  h+='<div class="card"><div class="stats">'
+    +stat(y.inv,"On hand")+stat(y.incoming,"In transit")+stat(money(y.profit),"Profit")+stat(y.lostSales,"Lost sales")
+    +'</div>';
+  if(y.tier==="R"){
+    h+='<div class="stats" style="margin-top:8px;">'
+      +stat(y.marketDemand,"Market demand")+stat(y.soldMarket,"Sold")
+      +stat(money(v.prices.sell),"Sell price")+stat(v.nextTotal,"Next wk total")
+      +'</div>';
+  } else {
+    h+='<div class="sub" style="margin-top:10px;">Next week market total (announced): <b>'+v.nextTotal+'</b></div>';
+  }
+  h+='</div>';
+  h+=extras(v);
+
+  // phase-specific action
+  if(v.phase==="lobby"){
+    h+='<div class="card"><span class="phase lobby">Lobby</span><div class="waiting">You\'re in. Waiting for the instructor to start the game…</div></div>';
+  } else if(v.phase==="order"){
+    h+=renderOrder(v);
+  } else if(v.phase==="ship"){
+    h+=renderShip(v);
+  }
+
+  var pc=profitChart(y.log);
+  if(pc){ h+='<div class="card"><h2>Your profit over time</h2>'+pc+'</div>'; }
+  h+=renderChat(v);
+  app.innerHTML=h;
+  wireActions(v);
+  paintTimer();
+}
+function stat(v,k){return '<div class="stat"><div class="v">'+esc(v)+'</div><div class="k">'+esc(k)+'</div></div>';}
+
+function renderOrder(v){
+  var y=v.you;
+  if(y.tier==="S"){
+    return '<div class="card"><span class="phase order">Order phase</span>'
+      +'<div class="sub" style="margin-top:8px;">As Raw Supplier, your raw-material intake is set by the instructor. No order needed — you\'ll allocate to the manufacturers in the next phase.</div></div>';
+  }
+  if(y.order){
+    return '<div class="card"><span class="phase order">Order phase</span>'
+      +'<div class="waiting">Order submitted: '+y.order.own+' own · '+y.order.cross+' cross. Waiting for the round to advance…</div></div>';
+  }
+  var own=v.upstream.find(function(u){return u.own;});
+  var cross=v.upstream.find(function(u){return !u.own;});
+  var h='<div class="card"><span class="phase order">Order phase</span>'
+    +'<h2 style="margin-top:8px;">Place your replenishment order</h2>'
+    +'<div class="sub">Order arrives <b>next week</b> (one-week lag). Own chain is cheaper; the rival chain costs more.</div>';
+  if(own) h+='<label class="f">From '+esc(own.id)+' — own chain <span class="hint">('+money(own.price)+'/unit)</span></label><input id="ord_own" type="number" min="0" value="0">';
+  if(cross) h+='<label class="f">From '+esc(cross.id)+' — rival chain <span class="hint">('+money(cross.price)+'/unit)</span></label><input id="ord_cross" type="number" min="0" value="0">';
+  h+='<button class="btn btn-red" id="ord_btn">Submit order</button></div>';
+  return h;
+}
+
+function renderShip(v){
+  var y=v.you;
+  if(y.tier==="R"){
+    return '<div class="card"><span class="phase ship">Ship phase</span>'
+      +'<div class="sub" style="margin-top:8px;">Sales to the market are automatic. You sold '+y.soldMarket+' of '+y.marketDemand+' demanded'
+      +(y.lostSales>0?' — <b style="color:var(--red)">'+y.lostSales+' lost</b>.':'.')+' Waiting for the round to advance…</div></div>';
+  }
+  if(v.cfg && v.cfg.roundMode==="B"){
+    return '<div class="card"><span class="phase ship">Ship phase</span><div class="waiting">Deliveries are shared out automatically this week. Waiting for the round to advance…</div></div>';
+  }
+  if(!v.ordersIn || v.ordersIn.length===0){
+    return '<div class="card"><span class="phase ship">Ship phase</span><div class="waiting">No orders to fill this week. Waiting…</div></div>';
+  }
+  var totalReq=v.ordersIn.reduce(function(a,o){return a+o.qty;},0);
+  var enough=totalReq<=y.inv;
+  if(y.alloc){
+    return '<div class="card"><span class="phase ship">Ship phase</span><div class="waiting">Shipment submitted. Waiting for the round to advance…</div></div>';
+  }
+  var h='<div class="card"><span class="phase ship">Ship phase</span>'
+    +'<h2 style="margin-top:8px;">Fill your customers\' orders</h2>'
+    +'<div class="sub">On hand: <b>'+y.inv+'</b> · total ordered: <b>'+totalReq+'</b>. '
+    +(enough?'You have enough — ship all.':'<b style="color:var(--red)">Short.</b> Choose who gets what.')+'</div>';
+  v.ordersIn.forEach(function(o,i){
+    var buyer=o.own?"own chain":"rival chain";
+    var def=enough?o.qty:0;
+    h+='<div class="alloc-row"><div><div class="who">'+esc(o.from)+' <span class="pill">'+buyer+'</span></div><div class="req">ordered '+o.qty+'</div></div>'
+      +'<input class="alloc-in" data-from="'+esc(o.from)+'" data-max="'+o.qty+'" type="number" min="0" max="'+o.qty+'" value="'+def+'"></div>';
+  });
+  h+='<div class="remain" id="remain"></div>';
+  h+='<button class="btn btn-navy" id="ship_btn">Ship it</button></div>';
+  return h;
+}
+
+function renderChat(v){
+  var c=v.cfg||{};
+  var chans=[];
+  if(c.chatMarket)chans.push(["market","Market — everyone"]);
+  if(c.chatTeam)chans.push(["team","Team — my chain"]);
+  if(c.chatNegotiate)chans.push(["negotiate","Negotiate — a partner"]);
+  if(chans.length===0) return '';                 // no channels enabled by the instructor
+  var chanSel='<select id="chat_chan">';
+  chans.forEach(function(ch){chanSel+='<option value="'+ch[0]+'">'+esc(ch[1])+'</option>';});
+  chanSel+='</select>';
+  var partners=(v.upstream||[]).concat(v.downstream||[]);
+  var partSel='<select id="chat_to" style="display:none;"><option value="">— partner —</option>';
+  partners.forEach(function(o){partSel+='<option value="'+esc(o.id)+'">'+esc(o.id)+'</option>';});
+  partSel+='</select>';
+  var msgs=(v.chat||[]).map(function(m){
+    var who=m.from==="controller"?"Instructor":m.from;
+    var tag=m.channel==="team"?" [team]":(m.channel==="negotiate"&&m.to?(" → "+m.to):"");
+    return '<div class="chatmsg"><b>'+esc(who)+esc(tag)+':</b> '+esc(m.text)+'</div>';
+  }).join("")||'<div class="chatmsg" style="color:var(--muted)">No messages yet.</div>';
+  return '<div class="card"><h2>Messages</h2>'
+    +'<div class="chatbox" id="chatbox">'+msgs+'</div>'
+    +'<div class="chatrow" style="grid-template-columns:auto auto 1fr auto;">'+chanSel+partSel+'<input id="chat_text" type="text" placeholder="Message…" maxlength="300"><button class="btn btn-ghost" id="chat_btn">Send</button></div></div>';
+}
+
+function wireActions(v){
+  var ob=document.getElementById("ord_btn");
+  if(ob) ob.onclick=function(){
+    var own=parseInt((document.getElementById("ord_own")||{}).value||0,10)||0;
+    var cross=parseInt((document.getElementById("ord_cross")||{}).value||0,10)||0;
+    client.send("order",{own:own,cross:cross});
+    ob.disabled=true; ob.textContent="Submitting…";
+  };
+  var sb=document.getElementById("ship_btn");
+  if(sb){
+    var ins=Array.prototype.slice.call(document.querySelectorAll(".alloc-in"));
+    var y=v.you;
+    function upd(){
+      var sum=0; ins.forEach(function(x){sum+=parseInt(x.value||0,10)||0;});
+      var rem=y.inv-sum; var el=document.getElementById("remain");
+      el.textContent="Stock left after shipping: "+rem; el.className="remain"+(rem<0?" bad":"");
+      sb.disabled=rem<0;
+    }
+    ins.forEach(function(x){x.addEventListener("input",upd);});
+    upd();
+    sb.onclick=function(){
+      var alloc={}; ins.forEach(function(x){alloc[x.getAttribute("data-from")]=parseInt(x.value||0,10)||0;});
+      client.send("allocate",{alloc:alloc}); sb.disabled=true; sb.textContent="Shipping…";
+    };
+  }
+  var cb=document.getElementById("chat_btn");
+  var chanSel=document.getElementById("chat_chan"), toSel=document.getElementById("chat_to");
+  if(chanSel&&toSel){ chanSel.onchange=function(){ toSel.style.display=(chanSel.value==="negotiate")?"":"none"; }; chanSel.onchange(); }
+  if(cb) cb.onclick=function(){
+    var t=document.getElementById("chat_text");
+    if(!t.value.trim())return;
+    var ch=chanSel?chanSel.value:"market";
+    var to=(ch==="negotiate"&&toSel)?toSel.value:"";
+    if(ch==="negotiate"&&!to){toast("Pick a partner to negotiate with.");return;}
+    client.send("chat",{channel:ch,to:to,text:t.value.trim()});
+    t.value="";
+  };
+}
+
+function renderEnd(v){
+  var y=v.you;
+  app.innerHTML=
+  '<div class="hdr"><span class="role">'+esc(y.id)+'</span><span class="chain">Game over</span></div>'
+  +'<div class="end-hero"><div style="font-size:13px;opacity:.85;">Your final profit</div>'
+  +'<div class="p">'+money(y.profit)+'</div>'
+  +'<div style="font-size:13px;opacity:.9;">'+esc(y.tierName)+' · Chain '+y.chain+'</div></div>'
+  +'<div class="card"><div class="stats">'
+  +stat(money(y.sales),"Sales")+stat(money(y.purchase),"Purchases")+stat(money(y.holding),"Holding")+stat(money(y.shortage),"Shortage")
+  +'</div><div class="sub" style="margin-top:12px;">Your instructor will announce the winners (best individual and best chain).</div></div>';
+}
+
+/* ---------------- events ---------------- */
+client.on("joined",function(m){ME.role=m.role;ME.tier=m.tier;ME.chain=m.chain;ME.tierName=m.tierName;ME.marketId=m.marketId;ME.joined=true;toast("You are "+m.role+" — "+m.tierName);});
+client.on("you",function(m){render(m);});
+client.on("seats",function(m){SEATMAP=m;PICK=null;renderPicker();});
+client.on("seatTaken",function(m){SEATMAP=m;PICK=null;renderPicker();toast(m.error||"That seat was just taken");});
+client.on("rejoin",function(m){ME.joined=false;toast(m.error||"Please rejoin");if(FORM.code)client.send("seats",{code:FORM.code});else renderJoin(FORM.code);});
+client.on("error",function(m){toast(m.error||"Error");var js=document.getElementById("jstatus");if(js)js.textContent=m.error||"";});
+client.on("fatal",function(m){app.innerHTML='<div class="card join-card"><h2>Almost ready</h2><div class="sub" style="margin-top:8px;">This page loaded correctly, but the game-server address hasn\'t been set yet. Ask your instructor for the join link, or try again in a moment.</div></div>';});
+client.on("close",function(){if(ME.joined)toast("Reconnecting…");});
+client.on("open",function(){if(ME.joined&&ME.role&&FORM.code){client.send("reattach",{code:FORM.code,role:ME.role,marketId:ME.marketId});}});
+
+var params=new URLSearchParams(location.search);
+renderJoin(params.get("code"));
+client.connect();
+</script>
+</body>
+</html>

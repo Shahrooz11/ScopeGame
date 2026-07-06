@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SCOPE — Winners</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#0b1b3f;--ink:#0c1430;--sub:#9fb0d6;--c1:#4a86c8;--c2:#e2685f;--gold:#f4c34e;--line:#22315c;--ease:cubic-bezier(.22,.61,.36,1);}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:Montserrat,-apple-system,system-ui,sans-serif;min-height:100vh;color:#eaf0ff;
+    background:radial-gradient(1200px 700px at 50% -10%,#1c2f63,#0b1b3f 60%),#0a1636;
+    display:flex;flex-direction:column;align-items:center;padding:40px 20px 70px;}
+  .app{width:100%;max-width:1000px;}
+  .brand{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:8px;opacity:.9;}
+  .brand .mk{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#fff2,#fff1);border:1px solid #ffffff22;display:flex;align-items:center;justify-content:center;font-weight:800;color:#cdd8ff;}
+  .brand .nm{font-size:12.5px;font-weight:600;letter-spacing:.06em;color:#b9c6ee;}
+  h1{text-align:center;font-size:clamp(30px,6vw,58px);font-weight:800;letter-spacing:-.03em;margin:6px 0 4px;
+    background:linear-gradient(180deg,#fff,#c9d6f5);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .tag{text-align:center;color:var(--sub);font-size:14px;font-weight:600;margin-bottom:34px;}
+  .reveal{opacity:0;transform:translateY(14px);transition:opacity .7s var(--ease),transform .7s var(--ease);}
+  .reveal.on{opacity:1;transform:none;}
+  .podium{display:grid;grid-template-columns:1fr;gap:18px;margin-bottom:30px;}
+  .champ{background:linear-gradient(160deg,#1a2b57,#12203f);border:1px solid var(--line);border-radius:24px;padding:30px 32px;position:relative;overflow:hidden;
+    box-shadow:0 30px 70px -30px #000a;}
+  .champ .crown{font-size:52px;line-height:1;}
+  .champ .lbl{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin:12px 0 6px;}
+  .champ .who{font-size:clamp(26px,4.5vw,40px);font-weight:800;letter-spacing:-.02em;}
+  .champ .meta{color:var(--sub);font-size:14px;font-weight:600;margin-top:4px;}
+  .champ .amt{position:absolute;right:32px;bottom:26px;font-size:clamp(22px,4vw,34px);font-weight:800;color:#8fe3ad;}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media(max-width:640px){.two{grid-template-columns:1fr;}}
+  .mini{background:#12203f;border:1px solid var(--line);border-radius:20px;padding:22px 24px;}
+  .mini .lbl{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--sub);}
+  .mini .v{font-size:24px;font-weight:800;margin-top:8px;letter-spacing:-.01em;}
+  .mini .v.c1{color:var(--c1);} .mini .v.c2{color:var(--c2);}
+  .mini .s{color:var(--sub);font-size:13px;font-weight:600;margin-top:4px;}
+  .board{background:#0f1c39;border:1px solid var(--line);border-radius:22px;padding:10px 12px;margin-top:26px;}
+  .board h2{font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);padding:14px 14px 8px;margin:0;}
+  .lr{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:12px 16px;border-radius:14px;transition:background .2s;}
+  .lr+.lr{border-top:1px solid #ffffff0d;}
+  .lr .rk{font-weight:800;color:var(--sub);text-align:center;font-size:15px;}
+  .lr.top1{background:linear-gradient(90deg,#f4c34e18,transparent);} .lr.top1 .rk{color:var(--gold);}
+  .lr .nm{font-weight:700;}
+  .lr .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px;vertical-align:middle;}
+  .lr .sub2{color:var(--sub);font-size:12px;font-weight:600;}
+  .lr .pf{font-weight:800;font-variant-numeric:tabular-nums;}
+  .foot{margin-top:30px;text-align:center;color:#7f8cba;font-size:12px;}
+  .controls{margin-top:24px;text-align:center;}
+  .rbtn{background:#1a2b57;border:1px solid var(--line);color:#dbe6ff;font:inherit;font-weight:700;font-size:13px;padding:11px 22px;border-radius:12px;cursor:pointer;}
+  .rbtn:hover{background:#22376b;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="brand"><span class="mk">S</span><span class="nm">SCOPE Game · RMIT</span></div>
+  <h1>Winners</h1>
+  <div class="tag" id="tag">Final results</div>
+  <div id="content"></div>
+  <div class="controls"><button class="rbtn" id="replay">↺ Replay reveal</button></div>
+  <div class="foot">Projector view. Feed live results by setting <code>window.SCOPE_RESULTS</code> before this page loads (see DEPLOY.md), or it shows a sample.</div>
+</div>
+
+<script>
+// Data hook: the deploy (or control.html) can set window.SCOPE_RESULTS = { markets:[ {name, serviceLevel, bestChain, chainProfit:[c0,c1], ranked:[{id,name,tier,chain,profit,bot}] } ] }
+var SAMPLE = { markets: [
+  { name:"Market 1", serviceLevel:92, bestChain:1, chainProfit:[12840,10420],
+    ranked:[{id:"R11",name:"Ava",tier:"Retailer",chain:1,profit:5210},{id:"W2",name:"Ben",tier:"Wholesaler",chain:2,profit:4360},
+            {id:"D1",name:"Cara",tier:"Distributor",chain:1,profit:3980},{id:"M2",name:"Deniz",tier:"Manufacturer",chain:2,profit:2600},
+            {id:"R21",name:"Eve",tier:"Retailer",chain:2,profit:2210},{id:"W1",name:"Finn",tier:"Wholesaler",chain:1,profit:1980}] },
+  { name:"Market 2", serviceLevel:88, bestChain:2, chainProfit:[9800,11250],
+    ranked:[{id:"W2",name:"Gia",tier:"Wholesaler",chain:2,profit:4720},{id:"R12",name:"Hugo",tier:"Retailer",chain:1,profit:4100},
+            {id:"D2",name:"Iris",tier:"Distributor",chain:2,profit:3550}] }
+]};
+var DATA = window.SCOPE_RESULTS || SAMPLE;
+
+function money(v){var n=Math.round(v);return (n<0?"-$":"$")+Math.abs(n).toLocaleString();}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+
+function compute(d){
+  var all=[]; d.markets.forEach(function(m){(m.ranked||[]).forEach(function(p){all.push(Object.assign({market:m.name},p));});});
+  all.sort(function(a,b){return b.profit-a.profit;});
+  var bestPlayer=all[0]||null;
+  // best chain across markets (sum chainProfit per chain index, pick winner per market then overall best single chain result)
+  var bestChainRes={profit:-1e9};
+  d.markets.forEach(function(m){ var idx=(m.bestChain||1)-1; var p=(m.chainProfit||[0,0])[idx]||0; if(p>bestChainRes.profit) bestChainRes={market:m.name,chain:m.bestChain,profit:p}; });
+  // best market by total profit
+  var bestMarket={profit:-1e9};
+  d.markets.forEach(function(m){ var tot=(m.chainProfit||[0,0]).reduce(function(a,b){return a+b;},0); if(tot>bestMarket.profit) bestMarket={name:m.name,profit:tot,service:m.serviceLevel}; });
+  return {bestPlayer:bestPlayer,bestChain:bestChainRes,bestMarket:bestMarket,markets:d.markets};
+}
+
+function render(){
+  var r=compute(DATA);
+  var bp=r.bestPlayer;
+  var h='<div class="podium">';
+  h+='<div class="champ reveal" data-i="0"><div class="crown">🏆</div><div class="lbl">Best player</div>'
+    +'<div class="who">'+esc(bp?bp.id:"—")+(bp&&bp.name&&!bp.bot?' · '+esc(bp.name):'')+'</div>'
+    +'<div class="meta">'+(bp?esc(bp.tier)+' · Chain '+bp.chain+' · '+esc(bp.market):'')+'</div>'
+    +'<div class="amt">'+money(bp?bp.profit:0)+'</div></div>';
+  h+='<div class="two">'
+    +'<div class="mini reveal" data-i="1"><div class="lbl">Best chain</div><div class="v c'+r.bestChain.chain+'">Chain '+r.bestChain.chain+'</div><div class="s">'+money(r.bestChain.profit)+' · '+esc(r.bestChain.market)+'</div></div>'
+    +'<div class="mini reveal" data-i="2"><div class="lbl">Best market</div><div class="v">'+esc(r.bestMarket.name)+'</div><div class="s">'+money(r.bestMarket.profit)+' total · '+r.bestMarket.service+'% service</div></div>'
+    +'</div></div>';
+  // per-market leaderboards
+  r.markets.forEach(function(m,mi){
+    h+='<div class="board reveal" data-i="'+(3+mi)+'"><h2>'+esc(m.name)+' — leaderboard</h2>';
+    (m.ranked||[]).forEach(function(p,i){
+      var col=p.chain===1?"var(--c1)":"var(--c2)";
+      h+='<div class="lr'+(i===0?" top1":"")+'"><div class="rk">'+(i===0?"★":(i+1))+'</div>'
+        +'<div><span class="dot" style="background:'+col+'"></span><span class="nm">'+esc(p.id)+(p.name&&!p.bot?' · '+esc(p.name):'')+'</span> <span class="sub2">'+esc(p.tier)+'</span></div>'
+        +'<div class="pf">'+money(p.profit)+'</div></div>';
+    });
+    h+='</div>';
+  });
+  document.getElementById("content").innerHTML=h;
+  document.getElementById("tag").textContent=DATA.markets.length+" market"+(DATA.markets.length>1?"s":"")+" · final results";
+  revealSeq();
+}
+function revealSeq(){
+  var els=[].slice.call(document.querySelectorAll(".reveal"));
+  els.forEach(function(el){el.classList.remove("on");});
+  els.forEach(function(el,i){ setTimeout(function(){el.classList.add("on");}, 180+i*260); });
+}
+document.getElementById("replay").onclick=revealSeq;
+
+// optional live hook: if a WS URL + code is present, you could subscribe here.
+// For now we render window.SCOPE_RESULTS (or the sample).
+render();
+</script>
+</body>
+</html>

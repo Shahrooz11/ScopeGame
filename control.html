@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCOPE — Control</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--red:#E60028;--navy:#0b1b3f;--bg:#eef1f8;--card:#fff;--line:#e8ecf3;--muted:#586074;--ok:#1b8a5a;--c1:#2f6fb0;--c2:#d0443f;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Montserrat,system-ui,sans-serif;background:radial-gradient(1000px 480px at 50% -6%,#eef3fc 0%,rgba(238,243,252,0) 60%),linear-gradient(180deg,#f8fafd,#eef2f8);color:#0f1024;min-height:100vh;line-height:1.5;}
+.wrap{max-width:1100px;margin:0 auto;padding:16px 16px 60px;}
+.topbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--navy);color:#fff;border-radius:16px;padding:14px 20px;margin-bottom:16px;}
+.topbar .title{font-size:18px;font-weight:800;}
+.code-badge{background:#fff;color:var(--navy);font-weight:800;font-size:22px;letter-spacing:.16em;padding:6px 16px;border-radius:12px;}
+.topbar .sp{margin-left:auto;}
+.btn{border:none;border-radius:11px;padding:11px 16px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;transition:transform .1s,opacity .2s;}
+.btn:active{transform:scale(.98);}.btn:disabled{opacity:.45;cursor:not-allowed;}
+.btn-red{background:var(--red);color:#fff;}.btn-navy{background:var(--navy);color:#fff;}.btn-ghost{background:#eef1f8;color:#333;}.btn-white{background:#fff;color:var(--navy);}
+.grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;}
+@media(max-width:860px){.grid2{grid-template-columns:1fr;}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px;}
+.card h2{font-size:14px;font-weight:800;color:var(--navy);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.sub{font-size:12px;color:var(--muted);}
+label.f{display:block;font-size:12.5px;font-weight:700;margin:12px 0 5px;}
+input[type=number],input[type=text],select{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;}
+.phase{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:20px;}
+.phase.order{background:#fff3cd;color:#8a5a00;}.phase.ship{background:#d1e7ff;color:#0b4f9e;}.phase.ended{background:#e8e8ef;color:#333;}.phase.lobby{background:#e6f6ee;color:var(--ok);}
+.mkt-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.mkt-tab{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;}
+.mkt-tab.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+.seat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;}
+.seat{border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:12px;}
+.seat .id{font-weight:800;color:var(--navy);}.seat .nm{color:var(--muted);font-size:11px;}
+.seat.human{border-color:var(--ok);background:#f2fbf6;}.seat.bot{background:#f7f8fc;}
+.seat .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;}
+.seat.human .dot{background:var(--ok);}.seat.bot .dot{background:#bbb;}
+.board-wrap{background:#fbfcfe;border:1px solid var(--line);border-radius:12px;padding:8px;overflow-x:auto;}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;}
+.kpi{background:#f6f8fd;border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;}
+.kpi .v{font-size:22px;font-weight:800;color:var(--navy);}.kpi .k{font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:700;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);}
+th{font-size:10px;text-transform:uppercase;color:var(--muted);letter-spacing:.04em;}
+.rank1{background:#fff8e6;}
+.badge-c1{color:var(--c1);font-weight:800;}.badge-c2{color:var(--c2);font-weight:800;}
+.prog{height:8px;background:#eef1f8;border-radius:6px;overflow:hidden;margin-top:4px;}
+.prog>div{height:100%;background:var(--ok);}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#111;color:#fff;padding:11px 18px;border-radius:12px;font-size:13px;font-weight:600;opacity:0;transition:opacity .25s;z-index:60;max-width:90%;}
+.toast.show{opacity:.95;}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.timer{font-weight:800;font-size:15px;color:var(--navy);}
+.split-preview{background:#f6f8fd;border-radius:10px;padding:12px;font-size:13px;margin-top:12px;}
+.chatbox{max-height:150px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:8px;background:#fafbfe;font-size:12px;}
+.chatmsg b{color:var(--navy);}
+.toggle{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;cursor:pointer;}
+.segwrap{display:inline-flex;gap:4px;background:#eef1f7;border-radius:10px;padding:3px;margin-top:4px;}
+.segb{border:0;background:transparent;font:inherit;font-size:11.5px;font-weight:700;color:var(--muted);padding:6px 10px;border-radius:7px;cursor:pointer;}
+.segb.on{background:#fff;color:var(--navy);box-shadow:0 1px 4px rgba(11,27,63,.15);}
+.win{background:linear-gradient(135deg,var(--navy),#33338a);color:#fff;border-radius:14px;padding:18px;margin-bottom:12px;}
+.win .big{font-size:24px;font-weight:800;}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script src="qrcode.min.js"></script>
+<script src="scope-client.js"></script>
+<script>
+var app=document.getElementById("app");
+if(typeof ScopeClient==="undefined"){app.innerHTML='<div class="card" style="max-width:540px;margin:8vh auto;"><h2>Files didn\'t load fully</h2><div class="sub" style="margin-top:8px;">scope-client.js didn\'t load. Hard-refresh with Ctrl/Cmd+Shift+R. If it keeps happening, the site is missing files — re-deploy the whole client folder (all of index.html, control.html, play.html, scope-client.js, config.js, qrcode.min.js, winners.html).</div></div>';throw new Error("scope-client.js not loaded");}
+var client=new ScopeClient();
+var SESSION=null;              // {code, split, headcount}
+var MARKETS={};                // marketId -> controlView
+var order=[];                  // market ids in order
+var selected=null;
+var timers={};                 // (legacy) retained; the live ticker below is deadline-based
+var FIRED={};                  // deadlineKey -> true, so timer auto-advance fires once per phase
+var DIRTY={};                  // settings fields the instructor has edited but not yet saved
+var CFG_NUM=["rounds","orderSeconds","shipSeconds","sell","hold","short","orderCost","capacity","leadTime","backorderPenalty","disruptionProb"];
+var CFG_CHK=["chatTeam","chatMarket","chatNegotiate","orderCostOn","capacityOn","leadTimeOn","backorderOn","disruptionOn","infoSharing","bullwhipFeedback","botsEnabled"];
+var CFG_SEG=["roundMode","allocRule"];
+
+function toast(t){var el=document.getElementById("toast");el.textContent=t;el.classList.add("show");clearTimeout(el._t);el._t=setTimeout(function(){el.classList.remove("show");},2800);}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function money(v){return "$"+Math.round(v).toLocaleString();}
+function anyRunning(){return order.some(function(id){var m=MARKETS[id];return m&&(m.phase==="order"||m.phase==="ship");});}
+
+/* ---------------- join link + real QR (self-contained, no CDN) ---------------- */
+function joinURL(){
+  var dir=location.pathname.replace(/[^/]*$/,"");            // strip filename -> directory
+  var base=location.origin+dir+"play.html";
+  return base+"?code="+encodeURIComponent(SESSION?SESSION.code:"");
+}
+function qrSVG(text,size){
+  size=size||220;
+  if(typeof qrcode!=="function") return '<div class="sub" style="width:'+size+'px;text-align:center;">QR library not loaded</div>';
+  try{
+    var qr=qrcode(0,"M"); qr.addData(text); qr.make();     // typeNumber 0 = auto-fit
+    var n=qr.getModuleCount(), cell=Math.max(3,Math.floor(size/n)), dim=n*cell, rects="";
+    for(var r=0;r<n;r++)for(var c=0;c<n;c++){ if(qr.isDark(r,c)) rects+='<rect x="'+(c*cell)+'" y="'+(r*cell)+'" width="'+cell+'" height="'+cell+'"/>'; }
+    return '<svg width="'+dim+'" height="'+dim+'" viewBox="0 0 '+dim+' '+dim+'" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Join game QR code" '
+      +'style="background:#fff;border-radius:12px;padding:8px;box-shadow:0 2px 12px rgba(0,0,32,.10);"><g fill="#0b1b3f">'+rects+'</g></svg>';
+  }catch(e){ return '<div class="sub">QR error: '+esc(e.message)+'</div>'; }
+}
+function joinCardHTML(qrSize){
+  return '<div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;">'
+    +'<div style="text-align:center;">'+qrSVG(joinURL(),qrSize||220)+'<div class="sub" style="margin-top:6px;font-weight:700;">Scan to join</div></div>'
+    +'<div style="min-width:220px;flex:1;">'
+      +'<div class="sub" style="margin-bottom:6px;">Students point a phone camera at the QR, or open the link and enter the code.</div>'
+      +'<div style="font-size:13px;margin-bottom:2px;">Game code</div>'
+      +'<div class="code-badge" style="display:inline-block;background:var(--navy);color:#fff;">'+esc(SESSION.code)+'</div>'
+      +'<div class="sub" style="margin-top:10px;word-break:break-all;">'+esc(joinURL())+'</div>'
+      +'<button class="btn btn-ghost" id="copylink" style="margin-top:10px;">Copy link</button>'
+    +'</div></div>';
+}
+function wireCopyLink(){
+  var b=document.getElementById("copylink"); if(!b)return;
+  b.onclick=function(){
+    var url=joinURL();
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url).then(function(){toast("Link copied");},function(){toast(url);});}
+    else{toast(url);}
+  };
+}
+
+/* ---------------- create screen ---------------- */
+function renderCreate(){
+  app.innerHTML=
+  '<div class="topbar"><span class="title">SCOPE · Instructor console</span></div>'
+  +'<div class="card" style="max-width:520px;margin:0 auto;">'
+  +'<h2>Create a game</h2>'
+  +'<div class="sub">Enter how many students will play. The tool splits them into markets of 10–12 and fills any empty seats with bots.</div>'
+  +'<label class="f">Number of students</label><input id="hc" type="number" min="1" max="120" value="12">'
+  +'<div class="split-preview" id="preview"></div>'
+  +'<div class="row" style="margin-top:12px;"><label class="toggle"><input id="autoadv" type="checkbox" checked> Auto-advance when everyone has submitted</label></div>'
+  +'<button class="btn btn-red" id="createbtn" style="width:100%;margin-top:14px;">Create game &amp; get code</button>'
+  +'<div class="sub" id="cstatus" style="margin-top:10px;text-align:center;"></div>'
+  +'</div>';
+  var hc=document.getElementById("hc");
+  function prev(){document.getElementById("preview").innerHTML=previewSplit(parseInt(hc.value||0,10)||0);}
+  hc.addEventListener("input",prev); prev();
+  document.getElementById("createbtn").onclick=function(){
+    document.getElementById("cstatus").textContent="Creating…";
+    client.send("createSession",{headcount:parseInt(hc.value||12,10)||12,autoAdvance:document.getElementById("autoadv").checked});
+  };
+}
+function previewSplit(h){
+  // mirror of engine.suggestSplit for a live preview
+  h=Math.max(0,Math.round(h)); var m=Math.max(1,Math.ceil(h/12)); var seats=[];
+  for(var i=0;i<m;i++)seats.push(12);
+  var excess=m*12-h,idx=0,g=0;
+  while(excess>0&&g<1000){if(seats[idx%m]>10){seats[idx%m]-=1;excess-=1;}idx++;g++;if(idx%m===0&&seats.every(function(x){return x===10;}))break;}
+  var total=seats.reduce(function(a,b){return a+b;},0);
+  return '<b>'+m+' market'+(m>1?'s':'')+':</b> '+seats.join(' + ')+' seats'
+    +'<br><span class="sub">'+Math.min(h,total)+' students + '+Math.max(0,total-h)+' bots. Each market = 2 competing chains.</span>';
+}
+
+/* ---------------- lobby (roster) ---------------- */
+function renderLobby(){
+  var h='<div class="topbar"><span class="title">SCOPE · Lobby</span>'
+    +'<span class="code-badge">'+esc(SESSION.code)+'</span>'
+    +'<span class="sub" style="color:#c9cff0;">Share this code — students open the Join page and enter it.</span>'
+    +'<span class="sp"></span>'
+    +'<button class="btn btn-white" id="startbtn">Start game ▶</button></div>';
+  h+='<div class="card"><h2>Students join here</h2>'+joinCardHTML(220)+'</div>';
+  h+='<div class="card"><h2>Players joining…</h2><div class="sub" style="margin-bottom:12px;">Seats fill as students join. Empty seats are played by bots when you start.</div>';
+  order.forEach(function(id){
+    var m=MARKETS[id]; if(!m)return;
+    var humans=m.nodes.filter(function(n){return !n.seat.bot;}).length;
+    h+='<div style="margin-bottom:14px;"><div style="font-weight:800;color:var(--navy);margin-bottom:6px;">Market '+esc(id)+' — '+humans+'/'+m.nodes.length+' seats filled</div><div class="seat-grid">';
+    m.nodes.forEach(function(n){
+      var cls=n.seat.bot?"bot":"human";
+      h+='<div class="seat '+cls+'"><span class="dot"></span><span class="id">'+esc(n.id)+'</span> <span class="sub">'+esc(({S:"Supplier",M:"Manuf.",D:"Distrib.",W:"Wholesaler",R:"Retailer"})[n.tier])+'</span>'
+        +'<div class="nm">'+(n.seat.bot?"bot":esc(n.seat.name||"—"))+'</div></div>';
+    });
+    h+='</div></div>';
+  });
+  h+='</div>';
+  h+=settingsCard();
+  var _snap=snapshotSettings();
+  app.innerHTML=h;
+  document.getElementById("startbtn").onclick=function(){client.send("start",{});};
+  wireSettings();
+  restoreSettings(_snap);
+  wireCopyLink();
+}
+
+/* ---------------- running / board ---------------- */
+function renderRunning(){
+  var ended=order.every(function(id){return MARKETS[id]&&MARKETS[id].phase==="ended";});
+  var h='<div class="topbar"><span class="title">SCOPE</span><span class="code-badge">'+esc(SESSION.code)+'</span>';
+  if(!ended){
+    h+='<span class="sp"></span>'
+      +'<button class="btn btn-ghost" id="advbtn">Advance phase ▶</button>'
+      +'<button class="btn btn-ghost" id="shockbtn">Inject shock ⚡</button>';
+  }
+  h+='<button class="btn btn-ghost" id="resetbtn">Reset</button></div>';
+
+  // market tabs
+  if(order.length>1){
+    h+='<div class="mkt-tabs">';
+    order.forEach(function(id){h+='<div class="mkt-tab'+(id===selected?' active':'')+'" data-mkt="'+esc(id)+'">'+esc(id)+' · '+esc(MARKETS[id].phase)+'</div>';});
+    h+='</div>';
+  }
+  var m=MARKETS[selected]; if(!m){app.innerHTML=h;return;}
+
+  h+='<div class="grid2"><div>';
+  // board + phase controls
+  h+='<div class="card"><h2>Market '+esc(selected)+' <span class="phase '+m.phase+'">'+esc(m.phase)+'</span> '
+    +'<span class="sub">Week '+m.week+' / '+m.rounds+'</span>';
+  if(m.phase!=="ended"){h+='<span class="sp" style="margin-left:auto;"></span><span class="timer" id="timer"></span>';}
+  h+='</h2>';
+  h+='<div class="board-wrap">'+boardSVG(m)+'</div>';
+  h+='<div class="sub" style="margin-top:8px;">Market total this week: <b>'+m.weekTotal+'</b> · announced next week: <b>'+m.nextTotal+'</b>. Solid links = own chain (cheaper). Dashed = rival chain (dearer).</div>';
+  if(m.phase!=="ended"){h+=submissionProgress(m);}
+  h+='</div>';
+
+  // bullwhip chart
+  h+='<div class="card"><h2>Order amplification (chain 1)</h2>'+bullwhipSVG(m)+'</div>';
+  h+='</div><div>';
+
+  // compact join card (late students can still take an empty seat)
+  h+='<div class="card"><h2>Join code <span class="sub">— late students can still join empty seats</span></h2>'+joinCardHTML(130)+'</div>';
+
+  // scoreboard
+  var sc=m.scores;
+  h+='<div class="card"><h2>Scoreboard</h2><div class="kpis">'
+    +'<div class="kpi"><div class="v">'+sc.serviceLevel+'%</div><div class="k">Service level</div></div>'
+    +'<div class="kpi"><div class="v badge-c1">'+money(sc.chainProfit[0])+'</div><div class="k">Chain 1 profit</div></div>'
+    +'<div class="kpi"><div class="v badge-c2">'+money(sc.chainProfit[1])+'</div><div class="k">Chain 2 profit</div></div>'
+    +'</div>';
+  h+='<table><thead><tr><th>#</th><th>Role</th><th>Player</th><th>Profit</th><th>Inv</th></tr></thead><tbody>';
+  sc.ranked.forEach(function(p,i){
+    h+='<tr class="'+(i===0?"rank1":"")+'"><td>'+(i+1)+'</td><td class="badge-c'+(p.chain+1)+'">'+esc(p.id)+'</td>'
+      +'<td>'+(p.bot?"<span class='sub'>bot</span>":esc(p.name||"—"))+'</td><td>'+money(p.profit)+'</td><td>'+p.inv+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+
+  // chat monitor
+  h+='<div class="card"><h2>Messages (all)</h2><div class="chatbox" id="cchat">'+chatHTML(m)+'</div>'
+    +'<div class="row" style="margin-top:8px;"><input id="cmsg" type="text" placeholder="Message everyone…" style="flex:1;"><button class="btn btn-navy" id="csend">Send</button></div></div>';
+  h+=settingsCard();
+  h+='</div></div>';
+
+  if(ended){h=winnersBanner()+h;}
+  var _snap=snapshotSettings();
+  app.innerHTML=h;
+  wireRunning(ended);
+  wireSettings();
+  restoreSettings(_snap);
+  wireCopyLink();
+  startTimers();
+}
+
+function submissionProgress(m){
+  var need,have,label;
+  if(m.phase==="order"){
+    var list=m.nodes.filter(function(n){return n.tier!=="S";});
+    need=list.length; have=list.filter(function(n){return n.submittedOrder||n.seat.bot;}).length; label="orders in";
+  } else {
+    var list2=m.nodes.filter(function(n){return n.ordersIn>0;});
+    need=list2.length||1; have=list2.filter(function(n){return n.submittedAlloc||n.seat.bot;}).length; label="shipments in";
+  }
+  var pct=Math.round(have/Math.max(1,need)*100);
+  return '<div style="margin-top:10px;"><div class="sub">'+have+' / '+need+' '+label+'</div><div class="prog"><div style="width:'+pct+'%"></div></div></div>';
+}
+
+/* network board SVG: 2 chains x 5 tiers, own solid / cross dashed */
+function boardSVG(m){
+  var W=520,H=300,colX=[60,175,290,405,480];
+  var yTop=90,yBot=210;
+  function pos(n){
+    var c=TIER_I(n.tier);
+    if(n.tier==="R"){
+      var rs=m.nodes.filter(function(x){return x.tier==="R";});
+      var mine=m.nodes.filter(function(x){return x.tier==="R"&&x.chain===n.chain;});
+      var k=mine.indexOf(n);
+      var baseY=n.chain===1?yTop:yBot;
+      var off=(mine.length>1)?(k===0?-26:26):0;
+      return {x:colX[4],y:baseY+off};
+    }
+    return {x:colX[c],y:n.chain===1?yTop:yBot};
+  }
+  function TIER_I(t){return {S:0,M:1,D:2,W:3,R:4}[t];}
+  var byId={}; m.nodes.forEach(function(n){byId[n.id]=n;});
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="max-width:560px;font-family:Montserrat;">';
+  // tier labels
+  ["Supplier","Manufacturer","Distributor","Wholesaler","Retailer"].forEach(function(t,i){
+    svg+='<text x="'+colX[i]+'" y="24" text-anchor="middle" font-size="10" font-weight="700" fill="#5a6178">'+t+'</text>';
+  });
+  // links: for each node, draw to its upstream (own solid, cross dashed)
+  function link(a,b,own){
+    var pa=pos(a),pb=pos(b);
+    return '<line x1="'+pa.x+'" y1="'+pa.y+'" x2="'+pb.x+'" y2="'+pb.y+'" stroke="'+(own?"#b9c2d8":"#e2b7bf")+'" stroke-width="'+(own?1.6:1.1)+'"'+(own?"":' stroke-dasharray="4 3"')+'/>';
+  }
+  var tiers=["M","D","W","R"];
+  var links="";
+  m.nodes.forEach(function(n){
+    if(n.tier==="S")return;
+    var upT={M:"S",D:"M",W:"D",R:"W"}[n.tier];
+    m.nodes.filter(function(u){return u.tier===upT;}).forEach(function(u){
+      links+=link(n,u,u.chain===n.chain);
+    });
+  });
+  svg+=links;
+  // nodes
+  m.nodes.forEach(function(n){
+    var p=pos(n),col=n.chain===1?"#2f6fb0":"#d0443f";
+    var submitted=(m.phase==="order")?(n.submittedOrder||n.tier==="S"||n.seat.bot):(m.phase==="ship")?(n.submittedAlloc||n.ordersIn===0||n.seat.bot):false;
+    var stroke=n.seat.bot?"#c2c8d6":(submitted?"#1b8a5a":col);
+    svg+='<g>'
+      +'<rect x="'+(p.x-30)+'" y="'+(p.y-17)+'" width="60" height="34" rx="8" fill="#fff" stroke="'+stroke+'" stroke-width="'+(submitted?2.4:1.6)+'"/>'
+      +'<text x="'+p.x+'" y="'+(p.y-3)+'" text-anchor="middle" font-size="11" font-weight="800" fill="'+col+'">'+esc(n.id)+'</text>'
+      +'<text x="'+p.x+'" y="'+(p.y+10)+'" text-anchor="middle" font-size="8.5" fill="#5a6178">inv '+n.inv+'</text>'
+      +'</g>';
+  });
+  svg+='</svg>';
+  return svg;
+}
+
+function bullwhipSVG(m){
+  var hist=m.history||[]; if(hist.length<1)return '<div class="sub">No data yet — advance a few weeks.</div>';
+  var W=460,H=150,pad=26;
+  var maxV=1; hist.forEach(function(h){maxV=Math.max(maxV,h.total,h.ordR,h.ordW,h.ordD,h.ordM);});
+  var n=hist.length;
+  function pts(key,col){
+    var p=hist.map(function(h,i){var x=pad+(i/(Math.max(1,n-1)))*(W-2*pad);var y=H-pad-(h[key]/maxV)*(H-2*pad);return x+","+y;}).join(" ");
+    return '<polyline points="'+p+'" fill="none" stroke="'+col+'" stroke-width="1.8"/>';
+  }
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="font-family:Montserrat">';
+  svg+='<line x1="'+pad+'" y1="'+(H-pad)+'" x2="'+(W-pad)+'" y2="'+(H-pad)+'" stroke="#e0e5f0"/>';
+  svg+=pts("total","#0b1b3f")+pts("ordR","#E60028")+pts("ordW","#1f8a5a")+pts("ordD","#c77700")+pts("ordM","#7a4fd0");
+  svg+='<text x="'+pad+'" y="12" font-size="9" fill="#5a6178">navy=demand · red=R · green=W · orange=D · purple=M orders</text>';
+  svg+='</svg>';
+  return svg;
+}
+
+function chatHTML(m){
+  return (m.chat||[]).slice(-40).map(function(msg){
+    var who=msg.from==="controller"?"You":msg.from;
+    var tag=msg.to&&msg.to!=="ALL"?(" → "+msg.to):"";
+    return '<div class="chatmsg"><b>'+esc(who)+esc(tag)+':</b> '+esc(msg.text)+'</div>';
+  }).join("")||'<div class="sub">No messages yet.</div>';
+}
+
+function winnersBanner(){
+  var m=MARKETS[selected],sc=m.scores;
+  var top=sc.ranked[0];
+  return '<div class="win"><div class="sub" style="color:#c9cff0;">Game over — Market '+esc(selected)+'</div>'
+    +'<div class="big">🏆 Best player: '+esc(top?top.id:"—")+' '+(top&&!top.bot?"("+esc(top.name)+")":"")+' — '+money(top?top.profit:0)+'</div>'
+    +'<div class="big" style="font-size:18px;margin-top:4px;">Best chain: Chain '+sc.bestChain+' — '+money(sc.chainProfit[sc.bestChain-1])+'</div></div>';
+}
+
+/* ---------------- settings ---------------- */
+function settingsCard(){
+  var m=MARKETS[order[0]]; var c=m?m.cfg:{};
+  function num(id,lbl,val){return '<div><label class="f">'+lbl+'</label><input id="cfg_'+id+'" type="number" value="'+(val!=null?val:"")+'"></div>';}
+  function seg(id,lbl,opts,val){var s='<div><label class="f">'+lbl+'</label><div class="segwrap" id="cfg_'+id+'" data-val="'+val+'">';opts.forEach(function(o){s+='<button type="button" class="segb'+(o[0]===val?" on":"")+'" data-v="'+o[0]+'">'+o[1]+'</button>';});return s+'</div></div>';}
+  function tog(id,lbl){return '<label class="toggle"><input type="checkbox" id="cfg_'+id+'"'+(c[id]?" checked":"")+'> '+lbl+'</label>';}
+  function optnum(id,val,step){return '<input id="cfg_'+id+'" type="number" step="'+(step||1)+'" value="'+(c[id]!=null?c[id]:val)+'" style="width:88px;">';}
+  return '<div class="card"><h2>Settings <span class="sub">— applies to all markets; students never see these</span></h2>'
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;">'
+    +seg("roundMode","Round timing",[["B","Simultaneous (B)"],["A","Two-phase (A)"]],c.roundMode||"B")
+    +seg("allocRule","When short, share by",[["prorata","Pro-rata"],["ownfirst","Own first"],["revenue","Max revenue"]],c.allocRule||"prorata")
+    +num("rounds","Rounds",c.rounds)+num("orderSeconds","Order timer (s)",c.orderSeconds)
+    +'<div id="shipTimerWrap"'+(((c.roundMode||"B")==="B")?' style="display:none;"':'')+'>'+num("shipSeconds","Ship timer (s)",c.shipSeconds)+'</div>'
+    +num("sell","Sell price",c.sell)+num("hold","Holding cost",c.hold)+num("short","Shortage",c.short)
+    +'<div class="sub" id="modeBnote" style="grid-column:1/-1;'+(((c.roundMode||"B")==="B")?'':'display:none;')+'">Mode B (default): students have no ship phase — deliveries are shared out automatically, so no ship timer is used.</div>'
+    +'</div>'
+    +'<div class="row" style="gap:10px;align-items:center;margin-top:6px;">'+tog("botsEnabled","Fill empty seats with bots")+'<span class="sub">Off = empty seats stay passive (order nothing); the round then advances on the students who did submit, or the timer.</span></div>'
+    +'<h2 style="margin-top:16px;font-size:15px;">Chat channels <span class="sub">— all off by default</span></h2>'
+    +'<div class="row" style="gap:18px;flex-wrap:wrap;">'+tog("chatTeam","Team (chain)")+tog("chatMarket","Market (all)")+tog("chatNegotiate","Negotiation")+'</div>'
+    +'<h2 style="margin-top:16px;font-size:15px;">Advanced options <span class="sub">— all off by default</span></h2>'
+    +'<div style="display:grid;gap:9px;">'
+    +'<div class="row" style="gap:10px;align-items:center;">'+tog("orderCostOn","Fixed order cost")+optnum("orderCost",50,10)+'<span class="sub">$/order</span></div>'
+    +'<div class="row" style="gap:10px;align-items:center;">'+tog("capacityOn","Capacity limit")+optnum("capacity",1500,100)+'<span class="sub">units/wk</span></div>'
+    +'<div class="row" style="gap:10px;align-items:center;">'+tog("leadTimeOn","Variable lead time")+optnum("leadTime",2,1)+'<span class="sub">weeks</span></div>'
+    +'<div class="row" style="gap:10px;align-items:center;">'+tog("backorderOn","Back-orders")+optnum("backorderPenalty",0.3,0.1)+'<span class="sub">$/unit/wk</span></div>'
+    +'<div class="row" style="gap:10px;align-items:center;">'+tog("disruptionOn","Random supply disruption")+optnum("disruptionProb",10,5)+'<span class="sub">%/wk</span></div>'
+    +'<div class="row" style="gap:18px;flex-wrap:wrap;">'+tog("infoSharing","Information sharing")+tog("bullwhipFeedback","Bullwhip feedback")+'</div>'
+    +'</div>'
+    +'<button class="btn btn-ghost" id="savecfg" style="margin-top:14px;">Save settings</button></div>';
+}
+function wireSettings(){
+  Array.prototype.forEach.call(document.querySelectorAll(".segwrap"),function(w){
+    Array.prototype.forEach.call(w.querySelectorAll(".segb"),function(b){b.onclick=function(){w.setAttribute("data-val",b.getAttribute("data-v"));Array.prototype.forEach.call(w.querySelectorAll(".segb"),function(x){x.classList.remove("on");});b.classList.add("on");};});
+  });
+  // ship-timer + ship-phase UI follow roundMode (B has no student ship phase)
+  function syncShipUI(){
+    var rm=document.getElementById("cfg_roundMode");
+    var isB=((rm&&rm.getAttribute("data-val"))||"B")==="B";
+    var w=document.getElementById("shipTimerWrap"); if(w)w.style.display=isB?"none":"";
+    var nb=document.getElementById("modeBnote"); if(nb)nb.style.display=isB?"":"none";
+  }
+  window.__syncShipUI=syncShipUI;
+  (function(){ var rm=document.getElementById("cfg_roundMode");
+    if(rm) Array.prototype.forEach.call(rm.querySelectorAll(".segb"),function(b){ b.addEventListener("click",syncShipUI); }); })();
+  syncShipUI();
+  // track which fields the instructor edits, so a re-render preserves the unsaved edit
+  // WITHOUT overriding legitimate server-pushed setting changes on untouched fields.
+  CFG_NUM.forEach(function(id){var el=document.getElementById("cfg_"+id);if(el)el.addEventListener("input",function(){DIRTY[id]=true;});});
+  CFG_CHK.forEach(function(id){var el=document.getElementById("cfg_"+id);if(el)el.addEventListener("change",function(){DIRTY[id]=true;});});
+  CFG_SEG.forEach(function(id){var w=document.getElementById("cfg_"+id);if(w)Array.prototype.forEach.call(w.querySelectorAll(".segb"),function(bb){bb.addEventListener("click",function(){DIRTY[id]=true;});});});
+  var b=document.getElementById("savecfg"); if(!b)return;
+  b.onclick=function(){
+    var cfg={};
+    CFG_NUM.forEach(function(id){var el=document.getElementById("cfg_"+id);if(el&&el.value!=="")cfg[id]=parseFloat(el.value);});
+    CFG_SEG.forEach(function(id){var w=document.getElementById("cfg_"+id);if(w)cfg[id]=w.getAttribute("data-val");});
+    CFG_CHK.forEach(function(id){var el=document.getElementById("cfg_"+id);if(el)cfg[id]=el.checked;});
+    client.send("config",{config:cfg}); toast("Settings saved"); DIRTY={};   // saved values are now authoritative
+  };
+}
+/* Preserve the instructor's in-progress settings edits across a re-render
+   (joins / chat / broadcasts rebuild the panel; without this they'd be wiped). */
+function snapshotSettings(){
+  if(!document.getElementById("savecfg")) return null;
+  var snap={num:{},chk:{},seg:{}};
+  CFG_NUM.forEach(function(id){if(DIRTY[id]){var el=document.getElementById("cfg_"+id);if(el)snap.num[id]=el.value;}});
+  CFG_CHK.forEach(function(id){if(DIRTY[id]){var el=document.getElementById("cfg_"+id);if(el)snap.chk[id]=el.checked;}});
+  CFG_SEG.forEach(function(id){if(DIRTY[id]){var w=document.getElementById("cfg_"+id);if(w)snap.seg[id]=w.getAttribute("data-val");}});
+  return snap;
+}
+function restoreSettings(snap){
+  if(!snap)return;
+  Object.keys(snap.num).forEach(function(id){var el=document.getElementById("cfg_"+id);if(el&&document.activeElement!==el)el.value=snap.num[id];});
+  Object.keys(snap.chk).forEach(function(id){var el=document.getElementById("cfg_"+id);if(el)el.checked=snap.chk[id];});
+  Object.keys(snap.seg).forEach(function(id){var w=document.getElementById("cfg_"+id);if(w){w.setAttribute("data-val",snap.seg[id]);Array.prototype.forEach.call(w.querySelectorAll(".segb"),function(b){b.classList.toggle("on",b.getAttribute("data-v")===snap.seg[id]);});}});
+  if(window.__syncShipUI)window.__syncShipUI();
+}
+
+/* ---------------- timers: deadline-synced countdown (single ticker) ----------
+ * Reads m.deadline (server-stamped epoch ms; see backend stampDeadline). Paints the
+ * selected market's countdown, and — as the single authority — fires `advance` ONCE
+ * when any running market's deadline passes (unless auto-advance is off).
+ * deadline === null  =>  "no time limit" (advance only on all-submitted / manual). */
+function fmtLeft(sec){ sec=Math.max(0,sec); var mn=Math.floor(sec/60),s=sec%60; return mn>0?(mn+":"+(s<10?"0":"")+s):(s+"s"); }
+function tick(){
+  var el=document.getElementById("timer");
+  order.forEach(function(id){
+    var mm=MARKETS[id]; if(!mm)return;
+    var timed=(mm.phase==="order"||mm.phase==="ship");
+    if(timed && mm.deadline!=null){
+      var left=Math.round((mm.deadline-Date.now())/1000);
+      if(id===selected && el) el.textContent="⏱ "+fmtLeft(left);
+      if(left<=0){
+        var key=id+":"+(mm.deadlineKey||(mm.week+":"+mm.phase));
+        if(mm.cfg.autoAdvance!==false && FIRED[key]!==true){ FIRED[key]=true; client.send("advance",{marketId:id}); }
+      }
+    } else if(id===selected && el){
+      el.textContent = timed ? "⏱ no time limit" : "";
+    }
+  });
+}
+function startTimers(){
+  if(window.__scopeTick) clearInterval(window.__scopeTick);
+  window.__scopeTick=setInterval(tick,1000);
+  tick();
+}
+
+/* ---------------- wiring ---------------- */
+function wireRunning(ended){
+  order.forEach(function(){});
+  document.querySelectorAll(".mkt-tab").forEach(function(t){t.onclick=function(){selected=t.getAttribute("data-mkt");renderRunning();};});
+  var adv=document.getElementById("advbtn"); if(adv)adv.onclick=function(){client.send("advance",{marketId:selected});};
+  var rs=document.getElementById("resetbtn"); if(rs)rs.onclick=function(){if(confirm("Reset all markets to week 0? Players keep their seats."))client.send("reset",{});};
+  var sh=document.getElementById("shockbtn"); if(sh)sh.onclick=function(){toast("Tip: set next-week demand via Settings, or let the built-in shocks fire in weeks 5–12.");};
+  var cs=document.getElementById("csend"); if(cs)cs.onclick=function(){var i=document.getElementById("cmsg");if(i.value.trim()){client.send("chat",{to:"ALL",text:i.value.trim()});i.value="";}};
+}
+
+/* ---------------- events ---------------- */
+client.on("session",function(m){
+  SESSION={code:m.code,split:m.split,headcount:m.headcount};
+  MARKETS={}; order=[];
+  (m.markets||[]).forEach(function(mv){MARKETS[mv.marketId]=mv;order.push(mv.marketId);});
+  selected=order[0];
+  renderLobby();
+  toast("Game created — code "+m.code);
+});
+client.on("market",function(m){
+  MARKETS[m.marketId]=m;
+  if(order.indexOf(m.marketId)===-1)order.push(m.marketId);
+  if(!selected)selected=m.marketId;
+  route();
+});
+client.on("error",function(m){toast(m.error||"Error");var cs=document.getElementById("cstatus");if(cs)cs.textContent=m.error||"";});
+// re-bind this console to its session whenever the socket (re)connects after setup.
+client.on("open",function(){ if(SESSION&&SESSION.code){ client.send("reattach",{code:SESSION.code,role:"controller"}); } });
+client.on("close",function(){ if(SESSION){toast("Reconnecting…");} });
+client.on("fatal",function(m){app.innerHTML='<div class="card" style="max-width:560px;margin:8vh auto;"><h2>Almost ready — game-server address needed</h2>'
+  +'<div class="sub" style="margin-top:8px;">Good news: the console itself loaded correctly. It just needs the address of your WebSocket game server before it can create a session.</div>'
+  +'<div class="sub" style="margin-top:8px;">If you are deploying this yourself, paste your <b>wss://…</b> URL into <b>config.js</b> and re-open. If someone is deploying it for you, this is filled in automatically.</div>'
+  +'<div class="sub" style="margin-top:8px;color:#98a0b8;">Technical detail: '+esc(m.error)+'</div></div>';});
+
+function route(){
+  if(!SESSION){return;}
+  var allLobby=order.every(function(id){return MARKETS[id]&&MARKETS[id].phase==="lobby";});
+  if(allLobby){renderLobby();} else {renderRunning();}
+}
+
+renderCreate();
+client.connect();
+</script>
+</body>
+</html>
