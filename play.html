@@ -59,8 +59,6 @@ input:focus{outline:none;border-color:var(--navy);}
 .pill{display:inline-block;background:#eef1f8;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;color:var(--navy);margin-right:6px;}
 .end-hero{background:linear-gradient(135deg,var(--navy),#33338a);color:#fff;border-radius:16px;padding:24px;text-align:center;}
 .end-hero .p{font-size:40px;font-weight:800;margin:6px 0;}
-.brand{display:block;height:46px;width:auto;margin:2px auto 14px;}
-.hdr .brand{height:24px;width:auto;margin:0;flex:none;}
 </style>
 </head>
 <body>
@@ -119,7 +117,6 @@ function renderJoin(prefillCode){
   ME.joined=false;
   app.innerHTML=
   '<div class="card join-card">'
-  +'<img class="brand" src="rmit-logo.svg" alt="RMIT University">'
   +'<h2 style="font-size:20px;">Join the SCOPE Game</h2>'
   +'<div class="sub">Enter the code your instructor shared and your details, then pick your role.</div>'
   +'<label class="f">Game code</label><input id="jcode" type="text" placeholder="e.g. K7P2" maxlength="6" value="'+esc(prefillCode||FORM.code||"")+'" style="text-transform:uppercase;letter-spacing:.15em;font-weight:800;">'
@@ -202,7 +199,6 @@ function render(v){
   var chainCol=y.chain===1?"var(--c1)":"var(--c2)";
   var h=
   '<div class="hdr">'
-  +'<img class="brand" src="rmit-logo.svg" alt="RMIT University">'
   +'<span class="role">'+esc(y.id)+'</span>'
   +'<span class="chain" style="background:'+chainCol+'">'+esc(y.tierName)+' · Chain '+y.chain+'</span>'
   +'<span class="timer" id="ptimer" style="margin-left:auto;"></span>'
