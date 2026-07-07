@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SCOPE Game — Instructor Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0b1b3f; --ink:#0c1430; --sub:#586074; --faint:#8b93a6;
+    --c1:#2f6fb0; --c1soft:#eef4fb; --c2:#d0443f; --c2soft:#fbeeed;
+    --line:#e8ecf3; --red:#E60028; --card:#fff;
+    --sysfont:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",Inter,Roboto,sans-serif;
+    --montfont:"Montserrat",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    --ease:cubic-bezier(.22,.61,.36,1);
+  }
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+  body{margin:0;color:var(--ink);background:
+      radial-gradient(1000px 480px at 50% -6%, #eef3fc 0%, rgba(238,243,252,0) 60%),
+      linear-gradient(180deg,#f8fafd,#eef2f8);}
+  body.font-system{font-family:var(--sysfont);}
+  body.font-montserrat{font-family:var(--montfont);}
+  a{color:var(--c1);text-decoration:none;}
+  a:hover{text-decoration:underline;}
+
+  /* ---- switcher ---- */
+  .switch{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);}
+  .switch .in{max-width:1080px;margin:0 auto;padding:10px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .switch .lbl{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);}
+  .seg{display:inline-flex;background:#eef1f7;border-radius:11px;padding:3px;gap:2px;}
+  .seg button{border:0;background:transparent;font:inherit;font-size:12.5px;font-weight:600;color:var(--sub);padding:6px 13px;border-radius:8px;cursor:pointer;transition:all .2s var(--ease);}
+  .seg button.on{background:#fff;color:var(--navy);box-shadow:0 2px 8px -3px rgba(13,30,72,.3);}
+  .switch .spacer{margin-left:auto;font-size:12px;color:var(--faint);font-weight:600;}
+
+  /* ---- shared bits ---- */
+  .wm{max-width:1080px;margin:0 auto;padding:0 22px;}
+  .brand{display:flex;align-items:center;gap:9px;padding-top:26px;}
+  .brand .mk{width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,var(--navy),#274084);position:relative;}
+  .brand .mk::after{content:"";position:absolute;inset:7px;border-radius:3px;background:var(--red);}
+  .brand .nm{font-size:12.5px;font-weight:600;color:var(--navy);letter-spacing:.01em;}
+  h1{letter-spacing:-.03em;font-weight:700;color:var(--ink);}
+  h2{letter-spacing:-.015em;font-weight:700;color:var(--navy);}
+  p{line-height:1.62;color:#2b3348;}
+  .lede{color:var(--sub);}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--c1);}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;}
+  .card h4{margin:0 0 4px;font-size:15px;color:var(--navy);}
+  .card .k{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);}
+  .card p{font-size:14px;margin:6px 0 0;color:#3a4257;}
+  .pill{display:inline-block;background:var(--c1soft);color:var(--c1);border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700;}
+  .pill.def{background:#e8f6ee;color:#2e8b57;}
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--line);font-size:14px;vertical-align:top;}
+  th{background:#f1f4fa;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--sub);}
+  tr:last-child td{border-bottom:0;}
+  td .setn{font-weight:700;color:var(--navy);}
+  .note{background:var(--c1soft);border-left:3px solid var(--c1);border-radius:10px;padding:12px 16px;font-size:14px;}
+  .note.warn{background:var(--c2soft);border-left-color:var(--red);}
+  ol.steps{counter-reset:s;list-style:none;padding:0;margin:0;}
+  ol.steps li{position:relative;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px 18px 15px 58px;margin-bottom:11px;font-size:14.5px;}
+  ol.steps li::before{counter-increment:s;content:counter(s);position:absolute;left:13px;top:14px;width:30px;height:30px;border-radius:9px;background:var(--navy);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:14px;}
+  .diagram{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;overflow-x:auto;}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:12.5px;color:var(--sub);}
+  .legend span{display:inline-flex;align-items:center;gap:6px;font-weight:600;}
+  .sw3{width:22px;height:0;border-top:3px solid;}
+  .cards{display:grid;gap:14px;}
+  .foot{color:var(--faint);font-size:13px;padding:30px 0 60px;}
+  .snum{color:var(--red);font-weight:800;}
+
+  /* ================= DEPTH: REFRESH (clean editorial) ================= */
+  body.depth-refresh .hero{text-align:left;padding:22px 0 30px;}
+  body.depth-refresh .hero h1{font-size:clamp(30px,5vw,50px);line-height:1.05;margin:12px 0 12px;}
+  body.depth-refresh .hero .lede{font-size:clamp(16px,2vw,20px);max-width:640px;}
+  body.depth-refresh section{padding:30px 0;border-top:1px solid var(--line);}
+  body.depth-refresh h2{font-size:clamp(20px,3vw,27px);margin:0 0 4px;}
+  body.depth-refresh .cards{grid-template-columns:repeat(auto-fill,minmax(240px,1fr));}
+  body.depth-refresh .sectlede{color:var(--sub);font-size:15.5px;max-width:720px;margin:2px 0 16px;}
+  body.depth-refresh .indexrail{display:none;}
+  body.depth-refresh .wrap2{display:block;}
+
+  /* ================= DEPTH: RESTRUCTURE (product-page feel) ================= */
+  body.depth-restructure .hero{position:relative;text-align:center;padding:60px 0 46px;margin:14px 0 8px;
+    background:linear-gradient(165deg,#0b1b3f,#1a2f63 60%,#2a1c56);border-radius:28px;color:#fff;
+    box-shadow:0 40px 80px -34px rgba(13,30,72,.55);}
+  body.depth-restructure .hero .eyebrow{color:#aab8e8;}
+  body.depth-restructure .hero h1{font-size:clamp(34px,6.2vw,68px);line-height:1.02;margin:12px auto;max-width:12ch;
+    background:linear-gradient(180deg,#fff,#c9d6f5);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  body.depth-restructure .hero .lede{color:#d9e0f4;font-size:clamp(16px,2.2vw,21px);max-width:600px;margin:0 auto;}
+  body.depth-restructure .wrap2{display:block;}
+  body.depth-restructure .indexrail{display:flex;gap:6px;overflow-x:auto;position:sticky;top:47px;z-index:40;background:rgba(255,255,255,.86);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:9px 0;margin:0 0 10px;-webkit-overflow-scrolling:touch;}
+  body.depth-restructure .indexrail::-webkit-scrollbar{height:0;}
+  body.depth-restructure .indexrail a{display:inline-block;white-space:nowrap;font-size:12.5px;font-weight:600;color:var(--sub);padding:6px 12px;border-radius:999px;background:#f1f4fa;border-left:0;}
+  body.depth-restructure .indexrail a:hover{color:#fff;background:var(--navy);text-decoration:none;}
+  body.depth-restructure section{padding:46px 0;border-top:1px solid var(--line);}
+  body.depth-restructure section:first-of-type{border-top:0;}
+  body.depth-restructure h2{font-size:clamp(24px,3.6vw,38px);margin:0 0 6px;letter-spacing:-.02em;}
+  body.depth-restructure .sectlede{color:var(--sub);font-size:clamp(16px,1.8vw,19px);max-width:660px;margin:4px 0 22px;line-height:1.55;}
+  body.depth-restructure .cards{grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;}
+  body.depth-restructure .card{border-radius:20px;padding:22px 24px;transition:transform .25s var(--ease),box-shadow .25s var(--ease);}
+  body.depth-restructure .card:hover{transform:translateY(-3px);box-shadow:0 22px 40px -22px rgba(13,30,72,.4);}
+  body.depth-restructure ol.steps li{border-radius:18px;padding:20px 22px 20px 66px;}
+  body.depth-restructure ol.steps li::before{width:36px;height:36px;left:16px;top:16px;border-radius:11px;font-size:16px;}
+  body.depth-restructure .topnav{display:none;}
+
+  /* top nav only in refresh */
+  .topnav{display:flex;gap:4px;flex-wrap:wrap;margin:6px 0 0;}
+  .topnav a{font-size:12.5px;font-weight:600;color:var(--sub);padding:6px 10px;border-radius:8px;}
+  .topnav a:hover{background:#fff;color:var(--navy);text-decoration:none;}
+</style>
+</head>
+<body class="depth-restructure font-montserrat">
+
+<div class="switch"><div class="in">
+  <span class="lbl">Layout</span>
+  <div class="seg" id="depthSeg">
+    <button data-d="refresh">Refresh</button>
+    <button data-d="restructure" class="on">Restructure</button>
+  </div>
+  <span class="lbl" style="margin-left:6px;">Font</span>
+  <div class="seg" id="fontSeg">
+    <button data-f="system">System</button>
+    <button data-f="montserrat" class="on">Montserrat</button>
+  </div>
+  <span class="spacer">Compare styles live &rarr;</span>
+</div></div>
+
+<div class="wm">
+  <div class="brand"><span class="mk"></span><span class="nm">SCOPE Game &middot; RMIT</span></div>
+  <div class="hero">
+    <div class="eyebrow">Instructor Guide</div>
+    <h1>Run the SCOPE supply-chain game with zero prep.</h1>
+    <p class="lede">A live, multiplayer game where each student runs one link of a supply chain and competes for profit. This guide explains every button and setting in plain words — no prior knowledge needed.</p>
+    <nav class="topnav">
+      <a href="#what">What it is</a><a href="#quick">In 60s</a><a href="#network">Network</a><a href="#week">A week</a><a href="#students">Students</a><a href="#settings">Settings</a><a href="#advanced">Advanced</a><a href="#run">Run it</a><a href="#results">Results</a><a href="#glossary">Glossary</a>
+    </nav>
+  </div>
+
+  <div class="wrap2">
+    <nav class="indexrail" aria-label="Sections">
+      <a href="#what">01 &middot; What it is</a><a href="#quick">02 &middot; In 60 seconds</a><a href="#network">03 &middot; The network</a>
+      <a href="#week">04 &middot; A week</a><a href="#students">05 &middot; Students</a><a href="#settings">06 &middot; Settings</a>
+      <a href="#advanced">07 &middot; Advanced options</a><a href="#run">08 &middot; Run a session</a><a href="#results">09 &middot; Reading results</a><a href="#glossary">10 &middot; Glossary</a>
+    </nav>
+    <main>
+
+<section id="what">
+  <h2><span class="snum">01</span> What is the SCOPE Game?</h2>
+  <p class="sectlede">A classroom game about how goods move from a raw-material supplier all the way to a shop — and why that is surprisingly hard to manage.</p>
+  <p>Two supply chains compete side by side. Each has five stages: a <b>Supplier</b>, a <b>Manufacturer</b>, a <b>Distributor</b>, a <b>Wholesaler</b>, and <b>Retailers</b>. Each student controls <b>one</b> stage and, every week, decides how much stock to order from the stage above. Customers appear only at the shops, but that demand ripples all the way up.</p>
+  <p>Each student's goal is simple: <b>make the most profit</b> — sell what customers want, without drowning in storage costs or running out. That tension is the whole game.</p>
+  <div class="note">The swings get bigger as you move up the chain — a real effect called the <b>bullwhip effect</b>, which students feel happen live.</div>
+</section>
+
+<section id="quick">
+  <h2><span class="snum">02</span> The game in 60 seconds</h2>
+  <ol class="steps">
+    <li>Open the <b>Master</b> screen and pick a few options — or just use the defaults.</li>
+    <li>Students scan a <b>QR code</b> and each take one role. Empty roles are filled by <b>bots</b>, so it works with any class size.</li>
+    <li>Press <b>Start</b>. Each week, students see next week's expected demand and <b>place an order</b> upstream.</li>
+    <li>Orders take <b>one week to arrive</b>. Unfilled demand is a <b>lost sale</b> (no back-orders by default).</li>
+    <li>After about <b>20 weeks</b>, the game reveals <b>winners</b>: best student, best chain, best market — with full stats.</li>
+  </ol>
+</section>
+
+<section id="network">
+  <h2><span class="snum">03</span> The supply network</h2>
+  <p class="sectlede">Two chains, five stages each, twelve seats. Students can buy from their own chain (cheaper) or the rival chain (dearer).</p>
+  <div class="diagram" id="netd"></div>
+  <div class="legend">
+    <span><i class="sw3" style="border-color:#2f6fb0"></i> Chain 1 (own &middot; cheaper)</span>
+    <span><i class="sw3" style="border-color:#d0443f"></i> Chain 2 (own &middot; cheaper)</span>
+    <span><i class="sw3" style="border-color:#aab4c4;border-top-style:dashed"></i> Cross-chain (rival &middot; dearer)</span>
+  </div>
+</section>
+
+<section id="week">
+  <h2><span class="snum">04</span> How one week works</h2>
+  <p class="sectlede">Every week follows the same rhythm. There are two ways to run it — you choose.</p>
+  <table>
+    <tr><td><span class="setn">One-week delivery</span></td><td>What you order this week arrives next week. Plan ahead.</td></tr>
+    <tr><td><span class="setn">Ship from stock on hand</span></td><td>You can only send what you already have at the start of the week.</td></tr>
+    <tr><td><span class="setn">No back-orders</span></td><td>Unfilled demand is lost forever (unless you turn back-orders on).</td></tr>
+    <tr><td><span class="setn">Week 0 is a warm-up</span></td><td>The first week builds starting stock. No customer sales yet.</td></tr>
+    <tr><td><span class="setn">Demand is announced</span></td><td>Next week's total is shown in advance so students can plan.</td></tr>
+    <tr><td><span class="setn">Two surprises</span></td><td>Demand jumps or drops twice (around weeks 5&ndash;12).</td></tr>
+  </table>
+  <div class="cards" style="margin-top:16px;">
+    <div class="card"><div class="k">Mode B <span class="pill def">default</span></div><h4>Simultaneous &middot; automatic</h4><p>Everyone orders in one window; deliveries are shared out automatically. Fast — best for large or first-time classes.</p></div>
+    <div class="card"><div class="k">Mode A</div><h4>Two-phase &middot; human sharing</h4><p>First everyone orders. Then, if a stage is short, that <b>student decides</b> who gets how much. More realistic, more discussion.</p></div>
+  </div>
+</section>
+
+<section id="students">
+  <h2><span class="snum">05</span> What students can (and can't) do</h2>
+  <p class="sectlede">Students only play and chat. They never see or change any settings — that is entirely your control.</p>
+  <div class="cards">
+    <div class="card"><div class="k">Every week</div><h4>Place an order</h4><p>Decide how much to buy from the stage above — own chain, rival chain, or both.</p></div>
+    <div class="card"><div class="k">Mode A only</div><h4>Share out stock</h4><p>If short, choose who gets how much. Automatic in Mode B.</p></div>
+    <div class="card"><div class="k">If you enable it</div><h4>Chat</h4><p>Team chat, market chat, or non-binding negotiation offers.</p></div>
+  </div>
+  <div class="note warn" style="margin-top:14px;"><b>Students never change settings, pause the timer, or submit twice.</b> Once they submit, they wait for the round to end.</div>
+</section>
+
+<section id="settings">
+  <h2><span class="snum">06</span> Every core setting</h2>
+  <p class="sectlede">You can run the whole game on defaults. Change these only for a different lesson. Defaults are green.</p>
+  <table>
+    <thead><tr><th style="width:200px">Setting</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><span class="setn">Pricing model</span></td><td><b>Per-tier markup</b> <span class="pill def">default</span> — every stage earns a margin. <b>Flat 1/2</b> — pay 1 own / 2 rival.</td></tr>
+      <tr><td><span class="setn">Round timing</span></td><td><b>Simultaneous &middot; auto (B)</b> <span class="pill def">default</span> vs <b>Two-phase &middot; human (A)</b>.</td></tr>
+      <tr><td><span class="setn">Allocation rule</span></td><td>In Mode B when short: <b>Pro-rata</b> <span class="pill def">default</span> / Own-chain first / Max revenue.</td></tr>
+      <tr><td><span class="setn">Rounds</span></td><td><b>20</b> <span class="pill def">default</span> incl. week-0 warm-up (~a 2-hour class).</td></tr>
+      <tr><td><span class="setn">Round timer</span></td><td><b>2 minutes</b> per window <span class="pill def">default</span>, adjustable. Advances when time is up or everyone has submitted.</td></tr>
+      <tr><td><span class="setn">Demand range &middot; shares &middot; shocks</span></td><td>The min/max weekly demand, how it splits between shops, and the two surprises.</td></tr>
+      <tr><td><span class="setn">Chat channels</span></td><td>Team / market / negotiation — each on or off, all off by default.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="advanced">
+  <h2><span class="snum">07</span> Advanced options <span class="pill">all off by default</span></h2>
+  <p class="sectlede">Optional realism settings. Turn any on to change how the game plays; each has a value you can tune.</p>
+  <table>
+    <tbody>
+      <tr><td><span class="setn">Fixed order cost</span></td><td>A flat fee each time a stage orders — rewards fewer, larger orders. <span class="pill">$50</span></td></tr>
+      <tr><td><span class="setn">Capacity limit</span></td><td>Max a stage can ship per week. <span class="pill">1500/wk</span></td></tr>
+      <tr><td><span class="setn">Variable lead time</span></td><td>Deliveries take longer than one week. <span class="pill">2 weeks</span></td></tr>
+      <tr><td><span class="setn">Back-orders</span></td><td>Unmet demand is carried over, not lost, for a weekly penalty. <span class="pill">0.3/unit/wk</span></td></tr>
+      <tr><td><span class="setn">Information sharing</span></td><td>Every stage sees the real customer demand — known to reduce the bullwhip effect. <span class="pill">on/off</span></td></tr>
+      <tr><td><span class="setn">Bullwhip feedback</span></td><td>Each student sees how much their own orders swing. <span class="pill">on/off</span></td></tr>
+      <tr><td><span class="setn">Random supply disruption</span></td><td>Each week a stage may suddenly be unable to ship. <span class="pill">10%/wk</span></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="run">
+  <h2><span class="snum">08</span> Run a session — step by step</h2>
+  <ol class="steps">
+    <li>Open the <b>Master</b> screen on the projector; leave it on the lobby.</li>
+    <li><b>(Optional)</b> change any settings. Unsure? Keep the defaults.</li>
+    <li>Students <b>scan the QR code</b> and pick a role. Empty seats become bots.</li>
+    <li>Press <b>Start</b> — the game enters week 0 (warm-up).</li>
+    <li>Each round, point to <b>next week's demand</b>; the round advances when the timer ends or everyone has submitted, or press <b>Advance</b>.</li>
+    <li>Watch the <b>map</b> and <b>dashboard</b> fill in — great teaching moments.</li>
+    <li>Near the end, open <b>Compare</b> for market-by-market and chain-vs-chain results.</li>
+    <li>Open <b>Winners</b> and press <b>Present fullscreen</b> for the big reveal.</li>
+  </ol>
+</section>
+
+<section id="results">
+  <h2><span class="snum">09</span> Reading the results</h2>
+  <p class="sectlede">What each screen tells you, in plain words.</p>
+  <div class="cards">
+    <div class="card"><div class="k">Screen</div><h4>The network map</h4><p>Each box is a stage. The big number is stock on hand; the dot shows health. Hover for details, click to highlight trades. Moving dots are deliveries.</p></div>
+    <div class="card"><div class="k">Screen</div><h4>Dashboard</h4><p>Live charts of profit, service level, inventory, cost, and the bullwhip effect over the weeks.</p></div>
+    <div class="card"><div class="k">Tab</div><h4>Compare</h4><p>Markets side by side, and Chain 1 vs Chain 2 across every key stat.</p></div>
+    <div class="card"><div class="k">Tab</div><h4>Winners</h4><p>Best student, chain, and market, plus a ranked leaderboard and a projector view.</p></div>
+  </div>
+  <table style="margin-top:16px;">
+    <tr><td><span class="setn">Profit</span></td><td>Sales minus stock, storage, and penalties. Higher is better — it decides the winners.</td></tr>
+    <tr><td><span class="setn">Service level</span></td><td>The share of demand actually met. Higher is better.</td></tr>
+    <tr><td><span class="setn">Lost sales</span></td><td>Demand that vanished. Lower is better.</td></tr>
+    <tr><td><span class="setn">Bullwhip &times;</span></td><td>How much orders swung vs real demand. Closer to 1 is better.</td></tr>
+  </table>
+</section>
+
+<section id="glossary">
+  <h2><span class="snum">10</span> Mini glossary</h2>
+  <div class="cards">
+    <div class="card"><h4>Bullwhip effect</h4><p>Small demand changes cause bigger order swings up the chain.</p></div>
+    <div class="card"><h4>Service level</h4><p>The percentage of customer demand you supplied.</p></div>
+    <div class="card"><h4>Lost sale</h4><p>Demand you couldn't meet — gone for good (unless back-orders are on).</p></div>
+    <div class="card"><h4>Holding cost</h4><p>The cost of stock sitting in storage.</p></div>
+    <div class="card"><h4>Lead time</h4><p>The delay between ordering and receiving.</p></div>
+    <div class="card"><h4>Bot</h4><p>An automatic player that fills any empty seat.</p></div>
+  </div>
+</section>
+
+<div class="foot">SCOPE Game &middot; Instructor Guide. Use the switch at the top to compare layouts and fonts. Every setting can be left on its default for a smooth first session.</div>
+
+    </main>
+  </div>
+</div>
+
+<script>
+(function(){
+  function seg(id,attr,cls){
+    var box=document.getElementById(id);
+    Array.prototype.forEach.call(box.querySelectorAll("button"),function(b){
+      b.onclick=function(){
+        Array.prototype.forEach.call(box.querySelectorAll("button"),function(x){x.classList.remove("on");});
+        b.classList.add("on");
+        var v=b.getAttribute(attr);
+        document.body.classList.remove(cls+"refresh",cls+"restructure",cls+"system",cls+"montserrat");
+        document.body.classList.add(cls+v);
+      };
+    });
+  }
+  seg("depthSeg","data-d","depth-");
+  seg("fontSeg","data-f","font-");
+})();
+
+(function(){
+  var NS="http://www.w3.org/2000/svg", C1="#2f6fb0", C2="#d0443f", NAVY="#0b1b3f";
+  var W=940,H=300,colX=[95,285,475,665,850],yTop=110,yBot=225,roff=42,NW=96,NH=54;
+  var tiers=[["S","Supplier"],["M","Manufacturer"],["D","Distributor"],["W","Wholesaler"],["R","Retailer"]];
+  function el(t,a){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);return e;}
+  function tx(x,y,s,o){var t=el("text",o||{});t.setAttribute("x",x);t.setAttribute("y",y);t.textContent=s;return t;}
+  var svg=el("svg",{viewBox:"0 0 "+W+" "+H,width:"100%",style:"display:block;min-width:720px"});
+  svg.appendChild(el("rect",{x:0,y:yTop-58,width:W,height:108,rx:14,fill:"#f4f8fd"}));
+  svg.appendChild(el("rect",{x:0,y:yBot-58,width:W,height:108,rx:14,fill:"#fdf4f4"}));
+  svg.appendChild(tx(14,yTop-40,"CHAIN 1",{"font-size":11,"font-weight":800,fill:C1,"letter-spacing":".1em"}));
+  svg.appendChild(tx(14,yBot-40,"CHAIN 2",{"font-size":11,"font-weight":800,fill:C2,"letter-spacing":".1em"}));
+  tiers.forEach(function(t,i){svg.appendChild(tx(colX[i],40,t[1],{"text-anchor":"middle","font-size":12,"font-weight":700,fill:NAVY}));});
+  function line(x1,y1,x2,y2,c,d){svg.appendChild(el("line",{x1:x1,y1:y1,x2:x2,y2:y2,stroke:c,"stroke-width":d?1.4:2.4,"stroke-linecap":"round","stroke-dasharray":d?"1 7":"",opacity:d?.55:.5}));}
+  [yTop,yBot].forEach(function(y){for(var i=0;i<3;i++)line(colX[i],y,colX[i+1],y,(y===yTop?C1:C2));line(colX[3],y,colX[4],y-roff,(y===yTop?C1:C2));line(colX[3],y,colX[4],y+roff,(y===yTop?C1:C2));});
+  line(colX[3],yTop,colX[4],yBot-roff,"#aab4c4",1);line(colX[3],yBot,colX[4],yTop+roff,"#aab4c4",1);line(colX[2],yTop,colX[3],yBot,"#aab4c4",1);line(colX[2],yBot,colX[3],yTop,"#aab4c4",1);
+  function node(x,y,label,accent){
+    var g=el("g",{});
+    g.appendChild(el("rect",{x:x-NW/2,y:y-NH/2,width:NW,height:NH,rx:13,fill:"#fff",stroke:"#eef1f7","stroke-width":1,filter:"drop-shadow(0 6px 12px rgba(13,30,72,.08))"}));
+    g.appendChild(el("rect",{x:x-NW/2+14,y:y-NH/2,width:NW-28,height:4,rx:2,fill:accent}));
+    g.appendChild(tx(x,y+1,label,{"text-anchor":"middle","font-size":17,"font-weight":700,fill:accent,"letter-spacing":"-.02em"}));
+    svg.appendChild(g);
+  }
+  ["S","M","D","W"].forEach(function(t,i){node(colX[i],yTop,t+"1",C1);node(colX[i],yBot,t+"2",C2);});
+  node(colX[4],yTop-roff,"R11",C1);node(colX[4],yTop+roff,"R12",C1);node(colX[4],yBot-roff,"R21",C2);node(colX[4],yBot+roff,"R22",C2);
+  document.getElementById("netd").appendChild(svg);
+})();
+</script>
+</body>
+</html>

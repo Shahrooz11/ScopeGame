@@ -22,6 +22,10 @@ a.opt.player:hover{border-color:var(--red);}
 a.opt.player .k{color:var(--red);}
 .opt .d{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.5;}
 .foot{margin-top:26px;font-size:11.5px;color:var(--muted);text-align:center;}
+.more{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+.more a{flex:1 1 30%;min-width:120px;text-align:center;text-decoration:none;border:1px solid var(--line);border-radius:12px;padding:11px 10px;font-size:12.5px;font-weight:700;color:var(--navy);transition:border-color .15s,transform .1s,background .15s;}
+.more a:hover{border-color:var(--navy);transform:translateY(-1px);background:#fbfcff;}
+.more a span{display:block;font-size:10.5px;font-weight:600;color:var(--muted);margin-top:3px;letter-spacing:.01em;}
 </style>
 </head>
 <body>
@@ -38,6 +42,11 @@ a.opt.player .k{color:var(--red);}
 <div class="k">Run a game →</div>
 <div class="d">You're the instructor. Create a session, share the code, and control the market.</div>
 </a>
+</div>
+<div class="more">
+<a href="scope-explainer.html">How it works<span>60-second walkthrough</span></a>
+<a href="scope-lab.html">Interactive lab<span>Try it — no sign-up</span></a>
+<a href="scope-info.html">Instructor guide<span>Every setting explained</span></a>
 </div>
 <div class="foot">Supply Chain AI Simulation Lab · Dr. Shahrooz Shahparvari, RMIT University</div>
 </div>
