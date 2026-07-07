@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The SCOPE Game — How it works</title>
+<style>
+  :root{
+    --navy:#0b1b3f; --ink:#0a1330; --sub:#5a6478; --faint:#8b94a7;
+    --c1:#2f6fb0; --c1soft:#eaf2fb; --c2:#d0443f; --c2soft:#fbeeed;
+    --line:#e9edf4; --red:#E60028;
+    --stage:#ffffff; --bg:#f4f6fb;
+    --ease:cubic-bezier(.22,.61,.36,1);
+  }
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+  html,body{height:100%;}
+  body{margin:0;background:
+      radial-gradient(1100px 520px at 50% -8%, #eef3fc 0%, rgba(238,243,252,0) 60%),
+      linear-gradient(180deg,#f7f9fd,#eef2f9);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",Inter,Roboto,sans-serif;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100%;padding:32px 20px;}
+  .app{width:100%;max-width:1000px;}
+
+  /* brand + hero */
+  .brand{display:flex;align-items:center;gap:9px;justify-content:center;margin-bottom:18px;}
+  .brand .mark{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--navy),#26407e);position:relative;box-shadow:0 4px 12px rgba(11,27,63,.28);}
+  .brand .mark::after{content:"";position:absolute;inset:8px;border-radius:3px;background:var(--red);}
+  .brand .name{font-size:13px;font-weight:600;letter-spacing:.02em;color:var(--navy);}
+  .hero{text-align:center;margin-bottom:26px;}
+  .hero h1{font-size:clamp(30px,5.2vw,58px);line-height:1.03;letter-spacing:-.03em;font-weight:700;margin:0 0 12px;
+    background:linear-gradient(180deg,#0a1330,#25406f);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .hero p{font-size:clamp(15px,2.1vw,20px);color:var(--sub);max-width:600px;margin:0 auto;line-height:1.5;font-weight:400;}
+
+  /* stage */
+  .stage{position:relative;background:var(--stage);border-radius:26px;
+    box-shadow:0 1px 0 rgba(255,255,255,.7) inset, 0 30px 70px -24px rgba(13,30,72,.35), 0 8px 24px -12px rgba(13,30,72,.2);
+    border:1px solid rgba(255,255,255,.7);overflow:hidden;}
+  .stage .frame{padding:10px 10px 0;}
+  svg{display:block;width:100%;height:auto;}
+
+  /* caption */
+  .cap{padding:22px 30px 26px;min-height:118px;display:flex;flex-direction:column;justify-content:center;
+    border-top:1px solid var(--line);background:linear-gradient(180deg,#fff, #fbfcfe);}
+  .cap .kicker{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:8px;
+    transition:opacity .45s var(--ease), transform .45s var(--ease);}
+  .cap .line{font-size:clamp(17px,2.5vw,25px);line-height:1.34;font-weight:500;letter-spacing:-.01em;color:var(--ink);max-width:760px;
+    transition:opacity .5s var(--ease), transform .5s var(--ease);}
+  .cap.swap .kicker,.cap.swap .line{opacity:0;transform:translateY(9px);}
+  .cap .line b{font-weight:700;color:var(--navy);}
+  .cap .line .b1{color:var(--c1);font-weight:700;} .cap .line .b2{color:var(--c2);font-weight:700;} .cap .line .br{color:var(--red);font-weight:700;}
+
+  /* progress */
+  .prog{height:3px;background:var(--line);position:relative;}
+  .prog i{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,var(--c1),var(--navy));border-radius:0 3px 3px 0;transition:width .3s linear;}
+
+  /* controls */
+  .controls{display:flex;align-items:center;gap:16px;margin-top:22px;padding:0 4px;}
+  .cbtn{border:0;background:#fff;border:1px solid var(--line);width:46px;height:46px;border-radius:50%;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px -8px rgba(13,30,72,.3);transition:transform .2s var(--ease),box-shadow .2s;}
+  .cbtn:hover{transform:translateY(-1px);box-shadow:0 10px 22px -10px rgba(13,30,72,.4);}
+  .cbtn svg{width:18px;height:18px;fill:var(--navy);}
+  .cbtn.main{width:54px;height:54px;background:var(--navy);border-color:var(--navy);}
+  .cbtn.main svg{fill:#fff;width:20px;height:20px;}
+  .dots{display:flex;gap:8px;margin-left:auto;align-items:center;}
+  .dots i{width:8px;height:8px;border-radius:50%;background:#d3dbe8;cursor:pointer;transition:all .35s var(--ease);}
+  .dots i.on{background:var(--navy);width:26px;border-radius:5px;}
+  .dots i.done{background:#aebdd4;}
+  .foot{margin-top:20px;text-align:center;color:var(--faint);font-size:12.5px;letter-spacing:.01em;}
+
+  /* svg element styling */
+  .node-card{filter:drop-shadow(0 8px 16px rgba(13,30,72,.10));}
+  .flowdot{opacity:0;}
+  .tok{opacity:0;transition:opacity .4s var(--ease);}
+  .tok.show{opacity:1;}
+  .softpulse{transform-box:fill-box;transform-origin:center;}
+  .softpulse.on{animation:sp 1.8s var(--ease) infinite;}
+  @keyframes sp{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.09);opacity:.92;}}
+  .rev{opacity:0;transform:translateY(6px);transition:opacity .6s var(--ease),transform .6s var(--ease);}
+  .rev.on{opacity:1;transform:none;}
+  .bw{transition:height .9s var(--ease), y .9s var(--ease);}
+  .glow{filter:drop-shadow(0 0 6px rgba(47,111,176,.5));}
+  @media (prefers-reduced-motion: reduce){ .softpulse.on{animation:none;} .flowdot{display:none;} }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="brand"><span class="mark"></span><span class="name">SCOPE Game · RMIT</span></div>
+  <div class="hero">
+    <h1>How the SCOPE Game works</h1>
+    <p>A sixty-second look at the supply chain you’re about to run — and the one decision that makes it hard.</p>
+  </div>
+
+  <div class="stage">
+    <div class="frame">
+      <svg id="svg" viewBox="0 0 1000 400" role="img" aria-label="Supply chain animation"></svg>
+    </div>
+    <div class="prog"><i id="progBar"></i></div>
+    <div class="cap" id="cap">
+      <div class="kicker" id="kicker">Scene 1</div>
+      <div class="line" id="line">…</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="cbtn main" id="playBtn" aria-label="Play or pause"><svg viewBox="0 0 24 24"><path id="playIcon" d="M8 5v14l11-7z"/></svg></button>
+    <button class="cbtn" id="replayBtn" aria-label="Replay"><svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg></button>
+    <div class="dots" id="dots"></div>
+  </div>
+  <div class="foot">An illustration. The real game is played live on your phones, in teams.</div>
+</div>
+
+<script>
+var NS="http://www.w3.org/2000/svg";
+var C1="#2f6fb0", C2="#d0443f", NAVY="#0b1b3f";
+var colX=[130,315,500,685,880], yTop=150, yBot=300, roff=48, NW=112, NH=64;
+var tierName={S:"Supplier",M:"Manufacturer",D:"Distributor",W:"Wholesaler",R:"Retailer"};
+function E(tag,a){var e=document.createElementNS(NS,tag);for(var k in a)e.setAttribute(k,a[k]);return e;}
+function T(x,y,s,o){var t=E("text",{x:x,y:y});for(var k in (o||{}))t.setAttribute(k,o[k]);t.textContent=s;return t;}
+
+var svg=document.getElementById("svg");
+(function build(){
+  // lane bands
+  svg.appendChild(E("rect",{x:0,y:yTop-70,width:1000,height:140,rx:22,fill:"#f6f9fe"}));
+  svg.appendChild(E("rect",{x:0,y:yBot-70,width:1000,height:140,rx:22,fill:"#fdf5f4"}));
+  svg.appendChild(T(20,yTop-52,"CHAIN 1",{"font-size":11,"font-weight":800,fill:C1,"letter-spacing":".14em"}));
+  svg.appendChild(T(20,yBot-52,"CHAIN 2",{"font-size":11,"font-weight":800,fill:C2,"letter-spacing":".14em"}));
+  var heads=E("g",{}); svg.appendChild(heads);
+  ["S","M","D","W","R"].forEach(function(t,i){heads.appendChild(T(colX[i],62,tierName[t],{"text-anchor":"middle","font-size":12.5,"font-weight":700,fill:"#33405e","letter-spacing":"-.01em"}));});
+  // links
+  var links=E("g",{}); svg.appendChild(links);
+  function link(x1,y1,x2,y2,col,dash){links.appendChild(E("line",{x1:x1,y1:y1,x2:x2,y2:y2,stroke:col,"stroke-width":dash?1.4:2.6,"stroke-linecap":"round","stroke-dasharray":dash?"1 8":"","opacity":dash?.6:.5}));}
+  [yTop,yBot].forEach(function(y){for(var i=0;i<4;i++)link(colX[i],y,colX[i+1],y,(y===yTop?C1:C2),false);});
+  link(colX[3],yTop,colX[4],yBot,"#b9c2d4",true); link(colX[3],yBot,colX[4],yTop,"#b9c2d4",true);
+  // bullwhip bars group (hidden)
+  var bw=E("g",{id:"bwbars"}); svg.appendChild(bw);
+  var heights=[16,30,50,76,108];
+  for(var i=0;i<5;i++){var bx=colX[4-i]-15;var r=E("rect",{x:bx,y:yTop-4,width:30,height:0,rx:6,fill:(i<2?"#9cc0e6":i<4?"#4a86c0":NAVY),opacity:.9,"class":"bw"});r.setAttribute("data-full",heights[i]);r.setAttribute("data-basey",yTop-4);bw.appendChild(r);}
+  // nodes
+  var nodes=E("g",{}); svg.appendChild(nodes);
+  function node(x,y,label,accent){
+    var g=E("g",{"class":"node-card"});
+    g.appendChild(E("rect",{x:x-NW/2,y:y-NH/2,width:NW,height:NH,rx:16,fill:"#fff",stroke:"#eef1f7","stroke-width":1}));
+    g.appendChild(E("rect",{x:x-NW/2+16,y:y-NH/2,width:NW-32,height:4,rx:2,fill:accent}));
+    g.appendChild(T(x,y+1,label,{"text-anchor":"middle","font-size":19,"font-weight":700,fill:accent,"letter-spacing":"-.02em"}));
+    g.appendChild(T(x,y+19,tierName[label[0]].toUpperCase(),{"text-anchor":"middle","font-size":8,"font-weight":700,fill:"#aab3c4","letter-spacing":".08em"}));
+    nodes.appendChild(g);
+  }
+  ["S","M","D","W"].forEach(function(t,i){node(colX[i],yTop,t+"1",C1);node(colX[i],yBot,t+"2",C2);});
+  node(colX[4],yTop-roff,"R11",C1);node(colX[4],yTop+roff,"R12",C1);
+  node(colX[4],yBot-roff,"R21",C2);node(colX[4],yBot+roff,"R22",C2);
+
+  // overlays
+  var ov=E("g",{}); svg.appendChild(ov);
+  // demand
+  var dem=E("g",{id:"demand","class":"rev"});
+  var dp=E("g",{"class":"softpulse",id:"demandPulse"});
+  dp.appendChild(E("circle",{cx:colX[4]+2,cy:yTop-roff,r:22,fill:NAVY}));
+  dp.appendChild(T(colX[4]+2,yTop-roff+5,"1200",{"text-anchor":"middle","font-size":12,"font-weight":800,fill:"#fff"}));
+  dem.appendChild(dp);
+  dem.appendChild(T(colX[4]+2,yTop-roff-30,"CUSTOMERS",{"text-anchor":"middle","font-size":9,"font-weight":800,fill:NAVY,"letter-spacing":".08em"}));
+  ov.appendChild(dem);
+  // lag chip
+  var lag=E("g",{id:"lagLabel","class":"rev"});
+  lag.appendChild(E("rect",{x:430,y:14,width:140,height:30,rx:15,fill:NAVY}));
+  lag.appendChild(T(500,34,"one week later",{"text-anchor":"middle","font-size":12.5,"font-weight":700,fill:"#fff"}));
+  ov.appendChild(lag);
+  // lost chip
+  var lost=E("g",{id:"lostBadge","class":"rev"});
+  lost.appendChild(E("rect",{x:colX[4]-64,y:yTop+roff-13,width:128,height:26,rx:13,fill:C2}));
+  lost.appendChild(T(colX[4],yTop+roff+4,"SALE LOST",{"text-anchor":"middle","font-size":11,"font-weight":800,fill:"#fff","letter-spacing":".04em"}));
+  ov.appendChild(lost);
+  // profit
+  var prof=E("g",{id:"profit","class":"rev"});
+  prof.appendChild(E("rect",{x:340,y:yBot+58,width:320,height:48,rx:14,fill:"#0c1b3a"}));
+  prof.appendChild(T(360,yBot+79,"YOUR GOAL",{"font-size":10,"font-weight":800,fill:"#8fa6d0","letter-spacing":".1em"}));
+  prof.appendChild(T(360,yBot+97,"Profit = Sales − Costs − Waste",{"font-size":15,"font-weight":700,fill:"#fff"}));
+  ov.appendChild(prof);
+  // trophy
+  var tr=E("g",{id:"trophy","class":"rev"});
+  tr.appendChild(T(500,150,"🏆",{"text-anchor":"middle","font-size":64}));
+  tr.appendChild(T(500,196,"Best student & best chain win",{"text-anchor":"middle","font-size":17,"font-weight":700,fill:NAVY,"letter-spacing":"-.01em"}));
+  ov.appendChild(tr);
+  // tokens
+  var ot=E("g",{id:"orderTok","class":"tok"});
+  ot.appendChild(E("circle",{r:16,fill:"#fff",stroke:NAVY,"stroke-width":2}));
+  ot.appendChild(T(0,-2,"↑",{"text-anchor":"middle","font-size":13,"font-weight":800,fill:NAVY}));
+  ot.appendChild(T(0,26,"ORDER",{"text-anchor":"middle","font-size":8.5,"font-weight":800,fill:NAVY,"letter-spacing":".05em"}));
+  ov.appendChild(ot);
+  var st2=E("g",{id:"shipTok","class":"tok glow"});
+  st2.appendChild(E("rect",{x:-16,y:-14,width:32,height:28,rx:8,fill:C1}));
+  st2.appendChild(T(0,5,"📦",{"text-anchor":"middle","font-size":13}));
+  ov.appendChild(st2);
+})();
+
+/* ---------- scene engine ---------- */
+function $(id){return document.getElementById(id);}
+function setClass(id,c,on){var e=$(id);if(e)e.classList[on?"add":"remove"](c);}
+var rafId=null;
+function moveToken(id,pts,dur,cb){
+  var tok=$(id);tok.classList.add("show");var start=null,segs=pts.length-1;
+  function fr(ts){if(!start)start=ts;var p=Math.min(1,(ts-start)/dur);
+    var e=p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2; // easeInOut
+    var fp=e*segs,si=Math.min(segs-1,Math.floor(fp)),lp=fp-si,a=pts[si],b=pts[si+1];
+    tok.setAttribute("transform","translate("+(a[0]+(b[0]-a[0])*lp)+","+(a[1]+(b[1]-a[1])*lp)+")");
+    if(p<1)rafId=requestAnimationFrame(fr);else if(cb)cb();}
+  rafId=requestAnimationFrame(fr);
+}
+var upPts=[[colX[4],yTop-roff],[colX[4],yTop],[colX[3],yTop],[colX[2],yTop],[colX[1],yTop],[colX[0],yTop]];
+var downPts=[[colX[0],yTop],[colX[1],yTop],[colX[2],yTop],[colX[3],yTop],[colX[4],yTop-roff]];
+
+var SCENES=[
+ {k:"The setup", c:'This is a <b>supply chain</b>. Goods flow from a <span class="b1">supplier</span> down to the <span class="br">shops</span> — and two chains compete, side by side.', dur:4600, run:function(){}},
+ {k:"Demand", c:'Customers appear only at the <span class="br">shops</span>. This week they want <b>1,200 units</b> — and that demand echoes all the way up the chain.', dur:4400, run:function(){setClass("demand","on",true);$("demandPulse").classList.add("on");}},
+ {k:"Ordering", c:'Every stage <b>orders</b> from the one above it — moving <b>upstream</b>, from shop toward supplier.', dur:5000, run:function(){setClass("demand","on",true);moveToken("orderTok",upPts,3600);}},
+ {k:"The one-week wait", c:'Deliveries take <b>one week to arrive</b>, flowing back <b>downstream</b>. So every order is a bet on <b>next</b> week.', dur:5000, run:function(){setClass("lagLabel","on",true);moveToken("shipTok",downPts,3600);}},
+ {k:"The bullwhip effect", c:'A small wobble in demand becomes a <b>bigger and bigger swing</b> upstream. Economists call it the <b>bullwhip effect</b>.', dur:5000, run:function(){var bars=document.querySelectorAll("#bwbars .bw");Array.prototype.forEach.call(bars,function(r,i){setTimeout(function(){var full=+r.getAttribute("data-full");r.setAttribute("height",full);r.setAttribute("y",(+r.getAttribute("data-basey"))-full);},140*i);});}},
+ {k:"No second chances", c:'If a shop <b>runs out</b>, that sale is <span class="br">gone for good</span> — there are no back-orders in this game.', dur:4400, run:function(){setClass("lostBadge","on",true);}},
+ {k:"The goal", c:'Your job: earn the <b>most profit</b> — meet demand without drowning in stock or running dry.', dur:4400, run:function(){setClass("profit","on",true);}},
+ {k:"Winning", c:'The <b>best student</b> and the <b>best chain</b> take the crown. Ready to play?', dur:5200, run:function(){setClass("trophy","on",true);}}
+];
+
+var idx=0, playing=true, timer=null, capTimer=null;
+(function dots(){var d=$("dots");SCENES.forEach(function(_,i){var b=document.createElement("i");b.onclick=function(){go(i);};d.appendChild(b);});})();
+function paintDots(){Array.prototype.forEach.call($("dots").children,function(b,i){b.className=i===idx?"on":(i<idx?"done":"");});}
+function resetVisuals(){
+  ["demand","lagLabel","lostBadge","profit","trophy"].forEach(function(id){setClass(id,"on",false);});
+  ["orderTok","shipTok"].forEach(function(id){$(id).classList.remove("show");});
+  $("demandPulse").classList.remove("on");
+  Array.prototype.forEach.call(document.querySelectorAll("#bwbars .bw"),function(r){r.setAttribute("height",0);r.setAttribute("y",r.getAttribute("data-basey"));});
+}
+function setCaption(s){
+  var cap=$("cap");cap.classList.add("swap");
+  clearTimeout(capTimer);
+  capTimer=setTimeout(function(){$("kicker").textContent=s.k;$("line").innerHTML=s.c;cap.classList.remove("swap");},260);
+}
+function showScene(i){
+  if(rafId)cancelAnimationFrame(rafId);
+  idx=i;resetVisuals();
+  if(i>=1)setClass("demand","on",true); // keep demand visible after it appears
+  var s=SCENES[i];
+  setCaption(s);
+  $("progBar").style.width=((i+1)/SCENES.length*100)+"%";
+  paintDots();
+  try{s.run();}catch(e){}
+}
+function go(i){clearTimeout(timer);showScene(i);if(playing&&i<SCENES.length-1){timer=setTimeout(function(){go(idx+1);},SCENES[i].dur);}if(i===SCENES.length-1){playing=false;setIcon();}}
+function setIcon(){$("playIcon").setAttribute("d",playing?"M6 5h4v14H6zM14 5h4v14h-4z":"M8 5v14l11-7z");}
+function play(){playing=true;setIcon();if(idx>=SCENES.length-1)idx=0;go(idx);}
+function pause(){playing=false;clearTimeout(timer);setIcon();}
+$("playBtn").onclick=function(){playing?pause():play();};
+$("replayBtn").onclick=function(){clearTimeout(timer);playing=true;setIcon();go(0);};
+setIcon();go(0);
+</script>
+</body>
+</html>

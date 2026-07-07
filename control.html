@@ -68,6 +68,7 @@ th{font-size:10px;text-transform:uppercase;color:var(--muted);letter-spacing:.04
 <script src="config.js"></script>
 <script src="qrcode.min.js"></script>
 <script src="scope-client.js"></script>
+<script src="scope-viz.js"></script>
 <script>
 var app=document.getElementById("app");
 if(typeof ScopeClient==="undefined"){app.innerHTML='<div class="card" style="max-width:540px;margin:8vh auto;"><h2>Files didn\'t load fully</h2><div class="sub" style="margin-top:8px;">scope-client.js didn\'t load. Hard-refresh with Ctrl/Cmd+Shift+R. If it keeps happening, the site is missing files — re-deploy the whole client folder (all of index.html, control.html, play.html, scope-client.js, config.js, qrcode.min.js, winners.html).</div></div>';throw new Error("scope-client.js not loaded");}
@@ -76,6 +77,7 @@ var SESSION=null;              // {code, split, headcount}
 var MARKETS={};                // marketId -> controlView
 var order=[];                  // market ids in order
 var selected=null;
+var vizView="board";           // running-console view: board | analytics | compare | winners
 var timers={};                 // (legacy) retained; the live ticker below is deadline-based
 var FIRED={};                  // deadlineKey -> true, so timer auto-advance fires once per phase
 var DIRTY={};                  // settings fields the instructor has edited but not yet saved
@@ -188,6 +190,16 @@ function renderLobby(){
 }
 
 /* ---------------- running / board ---------------- */
+function vizTabsHTML(){
+  if(!window.VIZ) return '';
+  var tabs=[["board","Board"],["analytics","Analytics"],["compare","Compare"],["winners","Winners"]];
+  var h='<div class="mkt-tabs viz-tabbar" style="align-items:center;">';
+  tabs.forEach(function(t){ h+='<div class="mkt-tab'+(vizView===t[0]?" active":"")+'" data-viz="'+t[0]+'">'+t[1]+'</div>'; });
+  h+='<span style="flex:1 1 auto;"></span>'
+    +'<button class="btn btn-navy" id="presentBtn" style="padding:9px 15px;">📺 Present on projector</button>'
+    +'<a class="btn btn-ghost" href="scope-info.html" target="_blank" style="padding:9px 15px;text-decoration:none;">📖 Guide</a>';
+  return h+'</div>';
+}
 function renderRunning(){
   var ended=order.every(function(id){return MARKETS[id]&&MARKETS[id].phase==="ended";});
   var h='<div class="topbar"><span class="title">SCOPE</span><span class="code-badge">'+esc(SESSION.code)+'</span>';
@@ -206,19 +218,29 @@ function renderRunning(){
   }
   var m=MARKETS[selected]; if(!m){app.innerHTML=h;return;}
 
-  h+='<div class="grid2"><div>';
-  // board + phase controls
-  h+='<div class="card"><h2>Market '+esc(selected)+' <span class="phase '+m.phase+'">'+esc(m.phase)+'</span> '
-    +'<span class="sub">Week '+m.week+' / '+m.rounds+'</span>';
-  if(m.phase!=="ended"){h+='<span class="sp" style="margin-left:auto;"></span><span class="timer" id="timer"></span>';}
-  h+='</h2>';
-  h+='<div class="board-wrap">'+boardSVG(m)+'</div>';
-  h+='<div class="sub" style="margin-top:8px;">Market total this week: <b>'+m.weekTotal+'</b> · announced next week: <b>'+m.nextTotal+'</b>. Solid links = own chain (cheaper). Dashed = rival chain (dearer).</div>';
-  if(m.phase!=="ended"){h+=submissionProgress(m);}
-  h+='</div>';
+  // accumulate per-node inventory history for the live map bars + keep the big screen fresh
+  if(window.VIZ){ VIZ.injectCSS(); order.forEach(function(id){ VIZ.record(MARKETS[id]); }); }
 
-  // bullwhip chart
-  h+='<div class="card"><h2>Order amplification (chain 1)</h2>'+bullwhipSVG(m)+'</div>';
+  // view tabs (Board / Analytics / Compare / Winners) + projector + guide
+  h+=vizTabsHTML();
+
+  h+='<div class="grid2"><div>';
+  if(!window.VIZ || vizView==="board"){
+    // board + phase controls
+    h+='<div class="card"><h2>Market '+esc(selected)+' <span class="phase '+m.phase+'">'+esc(m.phase)+'</span> '
+      +'<span class="sub">Week '+m.week+' / '+m.rounds+'</span>';
+    if(m.phase!=="ended"){h+='<span class="sp" style="margin-left:auto;"></span><span class="timer" id="timer"></span>';}
+    h+='</h2>';
+    h+='<div class="board-wrap">'+(window.VIZ?VIZ.boardSVG(m,{}):boardSVG(m))+'</div>';
+    if(window.VIZ){ h+='<div class="segwrap" id="metricSeg" style="margin-top:8px;"><span class="sub" style="margin-right:6px;">Map bars:</span><button type="button" class="segb'+(VIZ.getMetric()==="stock"?" on":"")+'" data-metric="stock">Stock</button><button type="button" class="segb'+(VIZ.getMetric()==="orders"?" on":"")+'" data-metric="orders">Orders</button></div>'; }
+    h+='<div class="sub" style="margin-top:8px;">Market total this week: <b>'+m.weekTotal+'</b> · announced next week: <b>'+m.nextTotal+'</b>. Solid links = own chain (cheaper). Dashed = rival chain (dearer)'+(window.VIZ?'. Bars in each box = that stage’s stock over time':'')+'.</div>';
+    if(m.phase!=="ended"){h+=submissionProgress(m);}
+    h+='</div>';
+    // bullwhip chart
+    h+='<div class="card"><h2>Order amplification (chain 1)</h2>'+bullwhipSVG(m)+'</div>';
+  } else if(vizView==="analytics"){ h+=VIZ.analyticsHTML(m); }
+  else if(vizView==="compare"){ h+=VIZ.compareHTML(MARKETS,order); }
+  else if(vizView==="winners"){ h+=VIZ.winnersHTML(MARKETS,order); }
   h+='</div><div>';
 
   // compact join card (late students can still take an empty seat)
@@ -252,6 +274,7 @@ function renderRunning(){
   restoreSettings(_snap);
   wireCopyLink();
   startTimers();
+  if(window.VIZ) VIZ.refreshBigScreen();
 }
 
 function submissionProgress(m){
@@ -467,6 +490,9 @@ function wireRunning(ended){
   var rs=document.getElementById("resetbtn"); if(rs)rs.onclick=function(){if(confirm("Reset all markets to week 0? Players keep their seats."))client.send("reset",{});};
   var sh=document.getElementById("shockbtn"); if(sh)sh.onclick=function(){toast("Tip: set next-week demand via Settings, or let the built-in shocks fire in weeks 5–12.");};
   var cs=document.getElementById("csend"); if(cs)cs.onclick=function(){var i=document.getElementById("cmsg");if(i.value.trim()){client.send("chat",{to:"ALL",text:i.value.trim()});i.value="";}};
+  document.querySelectorAll(".viz-tabbar [data-viz]").forEach(function(t){ t.onclick=function(){ vizView=t.getAttribute("data-viz"); renderRunning(); }; });
+  document.querySelectorAll("#metricSeg [data-metric]").forEach(function(bb){ bb.onclick=function(){ if(window.VIZ){ VIZ.setMetric(bb.getAttribute("data-metric")); renderRunning(); } }; });
+  var pb=document.getElementById("presentBtn"); if(pb&&window.VIZ) pb.onclick=function(){ VIZ.openBigScreen(function(){return {markets:MARKETS,order:order};},{}); };
 }
 
 /* ---------------- events ---------------- */

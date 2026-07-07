@@ -124,6 +124,7 @@ function renderJoin(prefillCode){
   +'<label class="f">Student ID <span class="hint">(optional)</span></label><input id="jid" type="text" inputmode="numeric" placeholder="e.g. 3820115" maxlength="32" value="'+esc(FORM.studentId)+'">'
   +'<button class="btn btn-navy" id="jbtn">Choose your role →</button>'
   +'<div class="waiting" id="jstatus"></div>'
+  +'<div style="text-align:center;margin-top:14px;"><a href="scope-explainer.html" target="_blank" style="font-size:12.5px;font-weight:700;color:var(--navy);text-decoration:none;">New here? See how it works →</a></div>'
   +'</div>';
   document.getElementById("jbtn").onclick=doFindSeats;
   document.getElementById("jid").addEventListener("keydown",function(e){if(e.key==="Enter")doFindSeats();});

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCOPE — Instructor Big Screen (demo)</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Montserrat,system-ui,sans-serif;background:#00021c;color:#fff;min-height:100vh;}
+.demo-hint{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:10000;background:#0b1b3f;border:1px solid rgba(255,255,255,.24);color:#dfe4ff;font-size:12px;font-weight:600;padding:8px 16px;border-radius:100px;box-shadow:0 8px 30px rgba(0,0,0,.5);pointer-events:none;}
+.demo-hint b{color:#fff;}
+#viz-bigscreen .bs-wrap{padding-bottom:66px;}
+</style>
+</head>
+<body>
+<div class="demo-hint">Demo — a simulated session on autoplay, showing <b>all markets at once</b>. This is exactly the view the live console projects.</div>
+<script src="scope-viz.js"></script>
+<script>
+/* ============================================================================
+   Lightweight session SIMULATOR (demo only).
+   Produces the same "market view" shape the real server sends, so the big
+   screen you see here is rendered by the identical scope-viz.js code path used
+   by the live instructor console. The real console feeds live game data in.
+   ==========================================================================*/
+(function(){
+  var TIERS=["S","M","D","W","R"];
+  var NAMES=["Ava Chen","Ben Okoro","Mia Rossi","Leo Park","Zoe Ali","Sam Ng","Ivy Loh","Kai Tran","Noa Berg","Ravi Das","Ella Kim","Tom Vo","Aria Sun","Jud Fox","Uma Rao"];
+  var seed=20260707;
+  function rng(){ seed=(seed*1103515245+12345)&0x7fffffff; return seed/0x7fffffff; }
+  function rint(a,b){ return Math.round(a+(b-a)*rng()); }
+
+  function makeNode(tier,chain,idx){
+    var id = tier==="R" ? ("R"+chain+idx) : (tier+chain);
+    var bot = rng()<0.45;
+    return { id:id, tier:tier, chain:chain, inv:1000, incoming:0, ordersIn:0,
+      submittedOrder:false, submittedAlloc:false,
+      seat:{ bot:bot, name: bot?null:NAMES[rint(0,NAMES.length-1)] },
+      sales:0, purchase:0, holding:0, shortage:0, profit:0, _lastOrder:0, _lost:0 };
+  }
+  function makeMarket(id){
+    var nodes=[];
+    [1,2].forEach(function(c){ ["S","M","D","W"].forEach(function(t){ nodes.push(makeNode(t,c,0)); });
+      nodes.push(makeNode("R",c,1)); nodes.push(makeNode("R",c,2)); });
+    return { marketId:id, phase:"lobby", week:0, rounds:20, weekTotal:0,
+      nextTotal:rint(500,1400), deadline:null, cfg:{sell:5,hold:0.5,short:2,roundMode:"B"},
+      chat:[], history:[], nodes:nodes,
+      _base:rint(280,360), _step:rint(6,12) };
+  }
+
+  function tierNodes(m,t,c){ return m.nodes.filter(function(n){return n.tier===t&&(c==null||n.chain===c);}); }
+
+  // advance one full week of a simple beer-game-like dynamic (amplifies upstream)
+  function stepWeek(m){
+    if(m.phase==="lobby") m.phase="order";
+    var t=m.week;
+    // customer demand per chain (two retailers)
+    var demandC=[0,0];
+    [1,2].forEach(function(c){
+      var base=m._base + (t>=8?m._step*6:0);           // a mild demand step around week 8
+      var d=Math.max(0, Math.round(base/2 + (rng()-0.5)*60));
+      demandC[c-1]=d*2;
+      tierNodes(m,"R",c).forEach(function(r){ r.marketDemand=d; });
+    });
+    m.weekTotal = m.nextTotal;
+    m.nextTotal = Math.max(300, Math.round((demandC[0]+demandC[1]) + (rng()-0.4)*300));
+
+    // orders flow up, amplifying: each tier orders downstream signal * gain
+    ["R","W","D","M","S"].forEach(function(t2){
+      [1,2].forEach(function(c){
+        tierNodes(m,t2,c).forEach(function(n){
+          var downSig;
+          if(t2==="R") downSig = n.marketDemand;
+          else { var dn={M:"R",D:"M",W:"D",S:"M"}; // rough downstream
+                 var lower={W:"R",D:"W",M:"D",S:"M"}[t2];
+                 var below=tierNodes(m,lower,c);
+                 downSig = below.reduce(function(a,x){return a+(x._lastOrder||x.marketDemand||140);},0)/Math.max(1,below.length); }
+          var gain = t2==="R"?1.0 : (1.15 + rng()*0.5);        // upstream over-reacts (bullwhip)
+          var noise = t2==="R" ? 24 : 58;                      // and orders noisier upstream
+          var order = Math.max(0, Math.round(downSig*gain + (rng()-0.5)*noise));
+          n._lastOrder=order; n.order=order;                 // expose per-node order for the Stock/Orders toggle
+          n.ordersIn = Math.round(downSig);
+          n.submittedOrder=true;
+        });
+      });
+    });
+    // inventory + profit update (visual): swing bigger upstream
+    m.nodes.forEach(function(n){
+      var target = n.tier==="R"?900 : (1000 + (TIERS.indexOf(n.tier))*40);
+      var swing = (n._lastOrder - (n.marketDemand||140)) * (1+TIERS.indexOf(n.tier)*0.6);
+      n.inv = Math.max(0, Math.round(n.inv*0.7 + target*0.3 - swing*0.5 + (rng()-0.5)*120));
+      var lost = n.inv<=0 ? rint(10,120) : 0;
+      n._lost += lost;
+      var margin = n.tier==="R" ? 1.8 : 1.2;                 // retailers sell dearer
+      var rev = (n._lastOrder||0)*margin;
+      var cost = n.inv*0.08 + lost*1.5 + (n._lastOrder||0)*1.0;   // holding + shortage + purchase
+      n.profit = Math.round((n.profit||0) + rev - cost);     // upstream tends to bleed from the bullwhip
+    });
+    // history snapshot (chain-1 tier order sums + demand + served/lost)
+    function ordSum(t2){ return tierNodes(m,t2,1).reduce(function(a,n){return a+(n._lastOrder||0);},0); }
+    var served=tierNodes(m,"R").reduce(function(a,r){return a+Math.min(r.inv+ (r.marketDemand||0), r.marketDemand||0);},0);
+    var lost=m.nodes.reduce(function(a,n){return a+ (n.inv<=0?1:0);},0);
+    m.history.push({ total:m.weekTotal, dem1:demandC[0], dem2:demandC[1], ordR:ordSum("R"), ordW:ordSum("W"), ordD:ordSum("D"), ordM:ordSum("M"),
+      served: Math.max(0,m.weekTotal-lost*30), lost: lost*30 });
+    // scores
+    var cp=[0,0]; m.nodes.forEach(function(n){ cp[n.chain-1]+=n.profit; });
+    var totServed=m.history.reduce(function(a,h){return a+(h.served||0);},0), totLost=m.history.reduce(function(a,h){return a+(h.lost||0);},0);
+    var ranked=m.nodes.map(function(n){ return {id:n.id, chain:(n.chain===1?0:1), bot:n.seat.bot, name:n.seat.name, profit:n.profit, inv:Math.round(n.inv)}; })
+      .sort(function(a,b){return b.profit-a.profit;});
+    m.scores={ serviceLevel: totServed+totLost>0?Math.round(totServed/(totServed+totLost)*100):100,
+      chainProfit:cp, bestChain:(cp[0]>=cp[1]?1:2), ranked:ranked };
+    m.week++;
+    if(m.week>=m.rounds) m.phase="ended";
+    else m.phase = (m.week%2===0)?"order":"ship";
+  }
+
+  // build a session of 3 markets (each with its own round length, so the timers differ)
+  var order=["1","2","3"];
+  var roundMs={"1":6000,"2":9000,"3":12000};
+  var MARKETS={};
+  function seedMarket(id){ var m=makeMarket(id); m.phase="order";
+    for(var w=0;w<10;w++){ stepWeek(m); VIZ.record(m); }       // pre-run several weeks so charts/ratios settle
+    m.deadline=Date.now()+roundMs[id]; return m; }
+  order.forEach(function(id){ MARKETS[id]=seedMarket(id); });
+
+  // open the big screen showing ALL markets side by side
+  VIZ.openBigScreen(function(){ return { markets:MARKETS, order:order }; });
+
+  // advance each market when its own round timer runs out (so the countdown is real)
+  var endedAt=0;
+  function loop(){ var now=Date.now(), changed=false;
+    order.forEach(function(id){ var m=MARKETS[id];
+      if(m.phase!=="ended" && now>=(m.deadline||0)){ stepWeek(m); VIZ.record(m);
+        m.deadline = (m.phase==="ended") ? null : now+roundMs[id]; changed=true; }
+    });
+    if(order.every(function(id){ return MARKETS[id].phase==="ended"; })){
+      if(!endedAt) endedAt=now;
+      else if(now-endedAt>6000){ order.forEach(function(id){ MARKETS[id]=seedMarket(id); }); endedAt=0; changed=true; }
+    }
+    if(changed) VIZ.refreshBigScreen();
+  }
+  setInterval(loop, 300);
+  loop();
+})();
+</script>
+</body>
+</html>
