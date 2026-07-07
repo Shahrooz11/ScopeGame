@@ -14,7 +14,7 @@ body{font-family:Montserrat,system-ui,sans-serif;background:#00021c;color:#fff;m
 </style>
 </head>
 <body>
-<div class="demo-hint">Demo — a simulated session on autoplay. Click a <b>Market</b> chip to pin it, or let it cycle. This is exactly the view the live console projects.</div>
+<div class="demo-hint">Demo — a simulated session on autoplay, showing <b>all markets at once</b>. This is exactly the view the live console projects.</div>
 <script src="scope-viz.js"></script>
 <script>
 /* ============================================================================
@@ -76,7 +76,7 @@ body{font-family:Montserrat,system-ui,sans-serif;background:#00021c;color:#fff;m
                  var below=tierNodes(m,lower,c);
                  downSig = below.reduce(function(a,x){return a+(x._lastOrder||x.marketDemand||140);},0)/Math.max(1,below.length); }
           var gain = t2==="R"?1.0 : (1.15 + rng()*0.5);        // upstream over-reacts (bullwhip)
-          var noise = t2==="R" ? 24 : 95;                      // and orders noisier upstream
+          var noise = t2==="R" ? 24 : 58;                      // and orders noisier upstream
           var order = Math.max(0, Math.round(downSig*gain + (rng()-0.5)*noise));
           n._lastOrder=order; n.order=order;                 // expose per-node order for the Stock/Orders toggle
           n.ordersIn = Math.round(downSig);
@@ -114,27 +114,32 @@ body{font-family:Montserrat,system-ui,sans-serif;background:#00021c;color:#fff;m
     else m.phase = (m.week%2===0)?"order":"ship";
   }
 
-  // build a session of 3 markets
+  // build a session of 3 markets (each with its own round length, so the timers differ)
   var order=["1","2","3"];
-  var MARKETS={}; order.forEach(function(id){ MARKETS[id]=makeMarket(id); });
-  function state(){ return { markets:MARKETS, order:order }; }
+  var roundMs={"1":5000,"2":6500,"3":8000};
+  var MARKETS={};
+  function seedMarket(id){ var m=makeMarket(id); m.phase="order";
+    for(var w=0;w<6;w++){ stepWeek(m); VIZ.record(m); }        // pre-run a few weeks so the charts have shape
+    m.deadline=Date.now()+roundMs[id]; return m; }
+  order.forEach(function(id){ MARKETS[id]=seedMarket(id); });
 
-  // open the big screen and drive it
-  VIZ.openBigScreen(state, { cycle:true, cycleMs: 9000 });   // auto-cycle markets every 9s (toggle in the header)
-  // record histories + advance the sim on a clock
-  var tick=0;
-  function loop(){
-    tick++;
-    // advance every market ~ once per 1.6s, staggered so they differ
-    order.forEach(function(id,i){ if((tick+i)%2===0 && MARKETS[id].phase!=="ended") stepWeek(MARKETS[id]); VIZ.record(MARKETS[id]); });
-    // if all ended, restart after a pause so the demo loops forever
-    if(order.every(function(id){return MARKETS[id].phase==="ended";})){
-      if(!loop._end){ loop._end=tick; }
-      else if(tick-loop._end>6){ order.forEach(function(id){ MARKETS[id]=makeMarket(id); }); loop._end=0; }
+  // open the big screen showing ALL markets side by side
+  VIZ.openBigScreen(function(){ return { markets:MARKETS, order:order }; });
+
+  // advance each market when its own round timer runs out (so the countdown is real)
+  var endedAt=0;
+  function loop(){ var now=Date.now(), changed=false;
+    order.forEach(function(id){ var m=MARKETS[id];
+      if(m.phase!=="ended" && now>=(m.deadline||0)){ stepWeek(m); VIZ.record(m);
+        m.deadline = (m.phase==="ended") ? null : now+roundMs[id]; changed=true; }
+    });
+    if(order.every(function(id){ return MARKETS[id].phase==="ended"; })){
+      if(!endedAt) endedAt=now;
+      else if(now-endedAt>6000){ order.forEach(function(id){ MARKETS[id]=seedMarket(id); }); endedAt=0; changed=true; }
     }
-    VIZ.refreshBigScreen();
+    if(changed) VIZ.refreshBigScreen();
   }
-  setInterval(loop, 800);
+  setInterval(loop, 300);
   loop();
 })();
 </script>

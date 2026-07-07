@@ -180,35 +180,42 @@
   }
 
   /* ---- projector "big screen" (dark, large) ---- */
-  function bigScreenHTML(markets, order, sel){
-    var ord=order||Object.keys(markets); sel=sel||ord[0]; var m=markets[sel]; if(!m) return '';
-    var sc=m.scores||{chainProfit:[0,0],serviceLevel:0}; ord.forEach(function(id){record(markets[id]);});
-    var players=allPlayers(markets,ord).slice(0,9);
-    var chips=ord.map(function(id){ return '<span class="bs-chip'+(id===sel?' on':'')+'" data-mkt="'+esc(id)+'">Market '+esc(id)+'</span>'; }).join("");
-    var lb=players.map(function(p,i){ var col=(p.chain===0)?"#7fb0e6":"#f28f8a";
-      return '<div class="bs-lbrow'+(i===0?' top':'')+'"><span class="bs-rk">'+(i+1)+'</span><span class="bs-rl" style="color:'+col+'">'+esc(p.id)+'</span><span class="bs-nm">'+(p.bot?'bot':esc((p.name||"").split(" ")[0]||"—"))+'<span class="bs-mk">M'+esc(p.market)+'</span></span><span class="bs-pf">'+money(p.profit)+'</span></div>'; }).join("");
+  function fmtLeft(sec){ sec=Math.max(0,Math.round(sec)); var mn=Math.floor(sec/60), s=sec%60; return mn+":"+(s<10?"0":"")+s; }
+  function marketPanel(m){
+    var sc=m.scores||{chainProfit:[0,0],serviceLevel:0,ranked:[]};
+    var ordOn=(METRIC==='orders'&&marketHasOrders(m));
     var h=m.history||[], mx=1; h.forEach(function(x){ mx=Math.max(mx,x.total||0,x.ordR||0,x.ordM||0); });
-    var amp=lineChart([{vals:h.map(function(x){return x.total||0;}),col:"#cfe0ff",w:3},{vals:h.map(function(x){return x.ordR||0;}),col:"#ff8a9c",w:2},{vals:h.map(function(x){return x.ordM||0;}),col:"#c9b6ff",w:2.4}],mx,h.length,{W:1200,H:170});
-    return '<div class="bs-wrap">'
-      +'<div class="bs-top"><div class="bs-brand"><span class="bs-logo"></span> SCOPE <span class="bs-sub">live board</span></div>'
-        +'<div class="bs-chips">'+chips+'</div>'
-        +'<div class="bs-tgs">'
-          +'<span class="bs-seg"><button class="bs-tg'+(METRIC==='stock'?' on':'')+'" data-metric="stock">Stock</button><button class="bs-tg'+(METRIC==='orders'?' on':'')+'" data-metric="orders">Orders</button></span>'
-          +'<button class="bs-tg cyc'+(BS.autoCycle?' on':'')+'" data-cycle>&#8635; Auto-cycle</button>'
-        +'</div>'
-        +'<div class="bs-week">Week <b>'+m.week+'</b> / '+m.rounds+' <span class="bs-phase '+m.phase+'">'+esc(m.phase)+'</span></div></div>'
-      +'<div class="bs-main">'
-        +'<div class="bs-mapcard"><div class="bs-cardh">Market '+esc(sel)+' · network <span class="bs-mut">bars = each stage’s '+((METRIC==='orders'&&marketHasOrders(m))?'weekly orders':'stock over time')+' — watch them swing upstream</span></div>'+boardSVG(m,{})+'</div>'
-        +'<div class="bs-side">'
-          +'<div class="bs-kpis"><div class="bs-kpi"><div class="bs-kv">'+sc.serviceLevel+'%</div><div class="bs-kk">Service</div></div>'
-            +'<div class="bs-kpi"><div class="bs-kv" style="color:#7fb0e6">'+money(sc.chainProfit[0])+'</div><div class="bs-kk">Chain 1</div></div>'
-            +'<div class="bs-kpi"><div class="bs-kv" style="color:#f28f8a">'+money(sc.chainProfit[1])+'</div><div class="bs-kk">Chain 2</div></div>'
-            +'<div class="bs-kpi"><div class="bs-kv" style="color:#ffd0d8">'+bwRatio(m).toFixed(1)+'×</div><div class="bs-kk">Bullwhip</div></div></div>'
-          +'<div class="bs-lbh">Leaderboard · all markets</div><div class="bs-lb">'+lb+'</div>'
-        +'</div>'
+    var amp=lineChart([{vals:h.map(function(x){return x.total||0;}),col:"#cfe0ff",w:2.6},{vals:h.map(function(x){return x.ordR||0;}),col:"#ff8a9c",w:1.8},{vals:h.map(function(x){return x.ordM||0;}),col:"#c9b6ff",w:2.2}],mx,h.length,{W:600,H:120});
+    var lead=((sc.ranked)||[]).slice(0,6).map(function(p,i){ var col=(p.chain===0)?"#7fb0e6":"#f28f8a";
+      return '<div class="bs-lbrow'+(i===0?' top':'')+'"><span class="bs-rk">'+(i+1)+'</span><span class="bs-rl" style="color:'+col+'">'+esc(p.id)+'</span><span class="bs-nm">'+(p.bot?'bot':esc((p.name||"").split(" ")[0]||"-"))+'</span><span class="bs-pf">'+money(p.profit)+'</span></div>'; }).join("")||'<div class="bs-mut" style="padding:8px;">No players yet.</div>';
+    return '<div class="bs-mkt">'
+      +'<div class="bs-mkth"><span class="bs-mklabel">Market '+esc(m.marketId)+'</span>'
+        +'<span class="bs-mkwk">wk '+m.week+'/'+m.rounds+'</span>'
+        +'<span class="bs-phase '+m.phase+'">'+esc(m.phase)+'</span>'
+        +'<span class="bs-mtimer" data-deadline="'+(m.deadline==null?'null':m.deadline)+'" data-phase="'+esc(m.phase)+'"></span>'
       +'</div>'
-      +'<div class="bs-amp"><div class="bs-cardh">Order amplification — <span class="bs-mut">pale = customer demand · red = retailer · purple = factory orders</span></div>'+amp+'</div>'
-      +'</div>';
+      +'<div class="bs-mkkpis">'
+        +'<div class="bs-kpi big"><div class="bs-kv">'+(m.weekTotal||0)+'</div><div class="bs-kk">Demand this week</div></div>'
+        +'<div class="bs-kpi"><div class="bs-kv">'+sc.serviceLevel+'%</div><div class="bs-kk">Service</div></div>'
+        +'<div class="bs-kpi"><div class="bs-kv" style="color:#7fb0e6">'+money(sc.chainProfit[0])+'</div><div class="bs-kk">Chain 1</div></div>'
+        +'<div class="bs-kpi"><div class="bs-kv" style="color:#f28f8a">'+money(sc.chainProfit[1])+'</div><div class="bs-kk">Chain 2</div></div>'
+        +'<div class="bs-kpi"><div class="bs-kv" style="color:#e88ea0">'+bwRatio(m).toFixed(1)+'x</div><div class="bs-kk">Bullwhip</div></div>'
+      +'</div>'
+      +'<div class="bs-mkmap">'+boardSVG(m,{})+'</div>'
+      +'<div class="bs-mkamp"><div class="bs-cardh">Order amplification'+(ordOn?' <span class="bs-mut">(map bars show orders)</span>':'')+'</div>'+amp+'</div>'
+      +'<div class="bs-mkamp"><div class="bs-cardh">Leaderboard</div><div class="bs-lb">'+lead+'</div></div>'
+    +'</div>';
+  }
+  function bigScreenHTML(markets, order){
+    var ord=(order||Object.keys(markets)).filter(function(id){return markets[id];});
+    ord.forEach(function(id){ record(markets[id]); });
+    var n=ord.length;
+    var header='<div class="bs-top2"><div class="bs-brand"><span class="bs-logo"></span> SCOPE <span class="bs-sub">live board</span></div>'
+      +'<div class="bs-tgs"><span class="bs-mut" style="color:#aab3e0;">Map bars:</span><span class="bs-seg"><button class="bs-tg'+(METRIC==='stock'?' on':'')+'" data-metric="stock">Stock</button><button class="bs-tg'+(METRIC==='orders'?' on':'')+'" data-metric="orders">Orders</button></span></div></div>';
+    if(!n) return '<div class="bs-wrap2">'+header+'<div class="bs-mkt" style="text-align:center;padding:60px;">Start a game to light up the big screen.</div></div>';
+    var maxPanel=(n===1?780:n===2?720:620), gridMax=Math.min(1860, n*maxPanel+(n-1)*18);
+    var panels=ord.map(function(id){ return marketPanel(markets[id]); }).join("");
+    return '<div class="bs-wrap2">'+header+'<div class="bs-grid" style="grid-template-columns:repeat('+n+',minmax(0,1fr));max-width:'+gridMax+'px;">'+panels+'</div></div>';
   }
 
   /* ---- CSS (injected once) ---- */
@@ -275,33 +282,54 @@
     +".bs-mk{color:#9aa3b5;font-weight:700;font-size:11px;margin-left:6px;}"
     +".bs-pf{font-weight:800;color:"+NAVY+";font-variant-numeric:tabular-nums;}"
     +".bs-amp{margin-top:18px;}"
+    +".bs-closebtn{position:fixed;top:16px;right:18px;z-index:3;cursor:pointer;font-size:14px;font-weight:700;padding:8px 15px;border-radius:100px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24);color:#fff;font-family:inherit;}"
+    +".bs-wrap2{max-width:1900px;margin:0 auto;padding:16px 22px 26px;font-family:Montserrat,system-ui,sans-serif;}"
+    +".bs-top2{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:14px;padding-right:110px;}"
+    +".bs-grid{display:grid;gap:18px;margin:0 auto;align-items:start;}"
+    +"@media(max-width:900px){.bs-grid{grid-template-columns:1fr!important;max-width:640px!important;}}"
+    +".bs-mkt{background:rgba(255,255,255,.97);border-radius:18px;padding:14px 15px 16px;box-shadow:0 30px 60px -30px rgba(0,0,30,.7);display:flex;flex-direction:column;gap:11px;min-width:0;}"
+    +".bs-mkth{display:flex;align-items:center;gap:9px;}"
+    +".bs-mklabel{font-size:19px;font-weight:800;color:"+NAVY+";}"
+    +".bs-mkwk{font-size:12.5px;font-weight:700;color:#8a8ea6;}"
+    +".bs-mtimer{margin-left:auto;font-size:16px;font-weight:800;color:"+NAVY+";font-variant-numeric:tabular-nums;}"
+    +".bs-mtimer.low{color:"+RED+";}.bs-mtimer.nolimit{color:#9aa3b5;font-size:12.5px;font-weight:700;}"
+    +".bs-mkkpis{display:grid;grid-template-columns:1.25fr 1fr 1fr 1fr .95fr;gap:7px;}"
+    +".bs-mkkpis .bs-kpi{background:#f6f8fd;border-radius:11px;padding:8px 6px;text-align:center;box-shadow:none;}"
+    +".bs-mkkpis .bs-kpi.big{background:#eaf1ff;}"
+    +".bs-mkkpis .bs-kv{font-size:19px;font-weight:800;color:"+NAVY+";}.bs-mkkpis .bs-kpi.big .bs-kv{font-size:23px;}"
+    +".bs-mkkpis .bs-kk{font-size:8.5px;text-transform:uppercase;letter-spacing:.03em;color:#8a8ea6;font-weight:700;margin-top:1px;}"
+    +".bs-mkamp .bs-cardh{font-size:12.5px;margin-bottom:3px;}.bs-mkamp .bs-lb{gap:5px;}"
     +".viz-anl{display:block;}";
     var st=document.createElement("style"); st.id="viz-css"; st.textContent=css; document.head.appendChild(st);
   }
 
   /* ---- big-screen controller (overlay lifecycle) ---- */
-  var BS={ el:null, get:null, sel:null, cycle:false, autoCycle:false, cycleMs:9000, timer:null };
-  function setAutoCycle(on){ BS.autoCycle=on; if(BS.timer){ clearInterval(BS.timer); BS.timer=null; }
-    if(on){ BS.timer=setInterval(function(){ BS.cycle=true; paintBS(); BS.cycle=false; }, BS.cycleMs); }
-    if(BS.el&&BS.el.classList.contains("show")) paintBS(); }
+  var BS={ el:null, get:null, clock:null };
+  function bsClock(){ if(!BS.el||!BS.el.classList.contains("show")) return;
+    Array.prototype.forEach.call(BS.el.querySelectorAll(".bs-mtimer"),function(el){
+      var ph=el.getAttribute("data-phase"), dl=el.getAttribute("data-deadline");
+      if(ph!=="order"&&ph!=="ship"){ el.textContent=""; el.className="bs-mtimer"; return; }
+      if(dl==null||dl==="null"||dl===""){ el.textContent="⏱ no limit"; el.className="bs-mtimer nolimit"; return; }
+      var left=Math.round((+dl-Date.now())/1000);
+      el.textContent="⏱ "+(left<=0?"0:00":fmtLeft(left)); el.className="bs-mtimer"+(left<=15?" low":"");
+    });
+  }
   function ensureOverlay(){ if(BS.el) return BS.el; injectCSS(); var d=document.createElement("div"); d.id="viz-bigscreen"; document.body.appendChild(d); BS.el=d;
     d.addEventListener("click",function(e){ var cl=function(s){ return e.target.closest&&e.target.closest(s); };
-      var c=cl(".bs-chip[data-mkt]"); if(c){ BS.sel=c.getAttribute("data-mkt"); setAutoCycle(false); paintBS(); return; }
       var mt=cl("[data-metric]"); if(mt){ METRIC=mt.getAttribute("data-metric"); paintBS(); return; }
-      var cy=cl("[data-cycle]"); if(cy){ setAutoCycle(!BS.autoCycle); return; }
       var x=cl("[data-bs-close]"); if(x){ closeBS(); } });
     document.addEventListener("keydown",function(e){ if(e.key==="Escape"&&BS.el&&BS.el.classList.contains("show")) closeBS(); });
     return d;
   }
-  function paintBS(){ if(!BS.el||!BS.get) return; var d=BS.get(); var markets=d.markets, order=d.order; if(!order||!order.length){ BS.el.innerHTML='<div class="bs-wrap"><div class="bs-top"><div class="bs-brand"><span class="bs-logo"></span> SCOPE</div><button data-bs-close style="margin-left:auto" class="bs-chip">Close ✕</button></div><div class="bs-mapcard" style="text-align:center;padding:60px">Start a game to light up the big screen.</div></div>'; return; }
-    if(!BS.sel||order.indexOf(BS.sel)===-1) BS.sel=order[0];
-    if(BS.cycle){ var i=order.indexOf(BS.sel); BS.sel=order[(i+1)%order.length]; }
-    BS.el.innerHTML='<button data-bs-close class="bs-chip" style="position:fixed;top:16px;right:18px;z-index:2">Close ✕</button>'+bigScreenHTML(markets,order,BS.sel);
+  function paintBS(){ if(!BS.el||!BS.get) return; var d=BS.get()||{}, markets=d.markets||{}, order=d.order||[];
+    BS.el.innerHTML='<button data-bs-close class="bs-closebtn">Close &times;</button>'+bigScreenHTML(markets,order);
+    bsClock();
   }
-  function openBS(getState, opts){ opts=opts||{}; ensureOverlay(); BS.get=getState; BS.cycle=false; BS.cycleMs=opts.cycleMs||BS.cycleMs||9000;
-    document.body.classList.add("bs-open"); BS.el.classList.add("show"); paintBS(); setAutoCycle(!!opts.cycle); }
+  function openBS(getState){ ensureOverlay(); BS.get=getState;
+    document.body.classList.add("bs-open"); BS.el.classList.add("show"); paintBS();
+    if(BS.clock)clearInterval(BS.clock); BS.clock=setInterval(bsClock,1000); }
   function refreshBS(){ if(BS.el&&BS.el.classList.contains("show")) paintBS(); }
-  function closeBS(){ if(BS.timer){clearInterval(BS.timer);BS.timer=null;} if(BS.el)BS.el.classList.remove("show"); document.body.classList.remove("bs-open"); }
+  function closeBS(){ if(BS.clock){clearInterval(BS.clock);BS.clock=null;} if(BS.el)BS.el.classList.remove("show"); document.body.classList.remove("bs-open"); }
   function bsOpen(){ return !!(BS.el&&BS.el.classList.contains("show")); }
 
   root.VIZ={ record:record, boardSVG:boardSVG, analyticsHTML:analyticsHTML, compareHTML:compareHTML, winnersHTML:winnersHTML, bigScreenHTML:bigScreenHTML, injectCSS:injectCSS, openBigScreen:openBS, refreshBigScreen:refreshBS, closeBigScreen:closeBS, bigScreenOpen:bsOpen,
