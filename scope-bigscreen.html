@@ -116,10 +116,10 @@ body{font-family:Montserrat,system-ui,sans-serif;background:#00021c;color:#fff;m
 
   // build a session of 3 markets (each with its own round length, so the timers differ)
   var order=["1","2","3"];
-  var roundMs={"1":5000,"2":6500,"3":8000};
+  var roundMs={"1":6000,"2":9000,"3":12000};
   var MARKETS={};
   function seedMarket(id){ var m=makeMarket(id); m.phase="order";
-    for(var w=0;w<6;w++){ stepWeek(m); VIZ.record(m); }        // pre-run a few weeks so the charts have shape
+    for(var w=0;w<10;w++){ stepWeek(m); VIZ.record(m); }       // pre-run several weeks so charts/ratios settle
     m.deadline=Date.now()+roundMs[id]; return m; }
   order.forEach(function(id){ MARKETS[id]=seedMarket(id); });
 

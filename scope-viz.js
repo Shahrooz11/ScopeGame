@@ -72,7 +72,7 @@
     var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="font-family:Montserrat;display:block">';
     s+='<rect x="0" y="70" width="'+W+'" height="210" rx="16" fill="#f2f7fc"/><rect x="0" y="286" width="'+W+'" height="210" rx="16" fill="#fdf4f4"/>';
     s+='<text x="16" y="63" font-size="11" font-weight="800" fill="'+C1+'" letter-spacing=".08em">CHAIN 1</text><text x="16" y="281" font-size="11" font-weight="800" fill="'+C2+'" letter-spacing=".08em">CHAIN 2</text>';
-    [["S","Supplier"],["M","Manufacturer"],["D","Distributor"],["W","Wholesaler"],["R","Retailer"]].forEach(function(hd,i){ s+=tierIcon(hd[0],NAVY,32,colX[i]-16,14)+'<text x="'+colX[i]+'" y="58" text-anchor="middle" font-size="13" font-weight="800" fill="'+NAVY+'">'+hd[1]+'</text>'; });
+    [["S","Supplier"],["M","Manufacturer"],["D","Distributor"],["W","Wholesaler"],["R","Retailer"]].forEach(function(hd,i){ s+=tierIcon(hd[0],NAVY,34,colX[i]-17,12)+'<text x="'+colX[i]+'" y="58" text-anchor="middle" font-size="16" font-weight="800" fill="'+NAVY+'">'+hd[1]+'</text>'; });
     // links
     nodes.forEach(function(n){ if(n.tier==="S")return; var upT={M:"S",D:"M",W:"D",R:"W"}[n.tier];
       nodes.filter(function(u){return u.tier===upT;}).forEach(function(u){ var pa=pos(n),pb=pos(u),own=(u.chain===n.chain);
@@ -90,13 +90,13 @@
         +'<rect x="'+left+'" y="'+top+'" width="'+NW+'" height="'+NH+'" rx="14" fill="#fff" stroke="'+stroke+'" stroke-width="'+sw+'"/>'
         +'<rect x="'+left+'" y="'+top+'" width="'+NW+'" height="6" rx="3" fill="'+accent+'"/>'
         +tierIcon(n.tier,accent,28,left+9,top+9)
-        +'<text x="'+(right-12)+'" y="'+(top+24)+'" text-anchor="end" font-size="15" font-weight="800" fill="'+accent+'">'+esc(n.id)+'</text>'
-        +'<text x="'+(left+13)+'" y="'+(top+50)+'" font-size="20" font-weight="800" fill="#0f1024">'+inv+'</text>'
-        +'<text x="'+(left+14)+'" y="'+(top+60)+'" font-size="8" font-weight="700" fill="#9aa3b5" letter-spacing=".06em">ON HAND</text>'
-        +'<circle cx="'+(right-14)+'" cy="'+(top+47)+'" r="6" fill="'+hc+'"/>'
+        +'<text x="'+(right-12)+'" y="'+(top+25)+'" text-anchor="end" font-size="18" font-weight="800" fill="'+accent+'">'+esc(n.id)+'</text>'
+        +'<text x="'+(left+13)+'" y="'+(top+51)+'" font-size="27" font-weight="800" fill="#0f1024">'+inv+'</text>'
+        +'<text x="'+(left+14)+'" y="'+(top+61)+'" font-size="9" font-weight="700" fill="#9aa3b5" letter-spacing=".05em">ON HAND</text>'
+        +'<circle cx="'+(right-15)+'" cy="'+(top+50)+'" r="6" fill="'+hc+'"/>'
         +barsSVG(n,left,right,top+84,accent)
-        +((n.seat&&!n.seat.bot&&n.seat.name)?'<text x="'+p.x+'" y="'+(top-6)+'" text-anchor="middle" font-size="9.5" font-weight="700" fill="#5a6178">'+esc((n.seat.name||"").split(" ")[0])+'</text>':'')
-        +(me?'<text x="'+p.x+'" y="'+(top-6)+'" text-anchor="middle" font-size="10" font-weight="800" fill="'+NAVY+'">YOU</text>':'')+'</g>';
+        +((n.seat&&!n.seat.bot&&n.seat.name)?'<text x="'+p.x+'" y="'+(top-6)+'" text-anchor="middle" font-size="11" font-weight="700" fill="#5a6178">'+esc((n.seat.name||"").split(" ")[0])+'</text>':'')
+        +(me?'<text x="'+p.x+'" y="'+(top-6)+'" text-anchor="middle" font-size="11" font-weight="800" fill="'+NAVY+'">YOU</text>':'')+'</g>';
     });
     return s+'</svg>';
   }
@@ -195,7 +195,7 @@
         +'<span class="bs-mtimer" data-deadline="'+(m.deadline==null?'null':m.deadline)+'" data-phase="'+esc(m.phase)+'"></span>'
       +'</div>'
       +'<div class="bs-mkkpis">'
-        +'<div class="bs-kpi big"><div class="bs-kv">'+(m.weekTotal||0)+'</div><div class="bs-kk">Demand this week</div></div>'
+        +'<div class="bs-kpi big"><div class="bs-kv">'+(m.weekTotal||0)+'</div><div class="bs-kk">Demand · wk</div></div>'
         +'<div class="bs-kpi"><div class="bs-kv">'+sc.serviceLevel+'%</div><div class="bs-kk">Service</div></div>'
         +'<div class="bs-kpi"><div class="bs-kv" style="color:#7fb0e6">'+money(sc.chainProfit[0])+'</div><div class="bs-kk">Chain 1</div></div>'
         +'<div class="bs-kpi"><div class="bs-kv" style="color:#f28f8a">'+money(sc.chainProfit[1])+'</div><div class="bs-kk">Chain 2</div></div>'
@@ -288,16 +288,16 @@
     +".bs-grid{display:grid;gap:18px;margin:0 auto;align-items:start;}"
     +"@media(max-width:900px){.bs-grid{grid-template-columns:1fr!important;max-width:640px!important;}}"
     +".bs-mkt{background:rgba(255,255,255,.97);border-radius:18px;padding:14px 15px 16px;box-shadow:0 30px 60px -30px rgba(0,0,30,.7);display:flex;flex-direction:column;gap:11px;min-width:0;}"
-    +".bs-mkth{display:flex;align-items:center;gap:9px;}"
-    +".bs-mklabel{font-size:19px;font-weight:800;color:"+NAVY+";}"
-    +".bs-mkwk{font-size:12.5px;font-weight:700;color:#8a8ea6;}"
+    +".bs-mkth{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}"
+    +".bs-mklabel{font-size:18px;font-weight:800;color:"+NAVY+";white-space:nowrap;}"
+    +".bs-mkwk{font-size:12px;font-weight:700;color:#8a8ea6;white-space:nowrap;}"
     +".bs-mtimer{margin-left:auto;font-size:16px;font-weight:800;color:"+NAVY+";font-variant-numeric:tabular-nums;}"
     +".bs-mtimer.low{color:"+RED+";}.bs-mtimer.nolimit{color:#9aa3b5;font-size:12.5px;font-weight:700;}"
-    +".bs-mkkpis{display:grid;grid-template-columns:1.25fr 1fr 1fr 1fr .95fr;gap:7px;}"
-    +".bs-mkkpis .bs-kpi{background:#f6f8fd;border-radius:11px;padding:8px 6px;text-align:center;box-shadow:none;}"
+    +".bs-mkkpis{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,.85fr);gap:6px;}"
+    +".bs-mkkpis .bs-kpi{background:#f6f8fd;border-radius:11px;padding:7px 4px;text-align:center;box-shadow:none;overflow:hidden;min-width:0;}"
     +".bs-mkkpis .bs-kpi.big{background:#eaf1ff;}"
-    +".bs-mkkpis .bs-kv{font-size:19px;font-weight:800;color:"+NAVY+";}.bs-mkkpis .bs-kpi.big .bs-kv{font-size:23px;}"
-    +".bs-mkkpis .bs-kk{font-size:8.5px;text-transform:uppercase;letter-spacing:.03em;color:#8a8ea6;font-weight:700;margin-top:1px;}"
+    +".bs-mkkpis .bs-kv{font-size:16px;font-weight:800;color:"+NAVY+";white-space:nowrap;}.bs-mkkpis .bs-kpi.big .bs-kv{font-size:21px;}"
+    +".bs-mkkpis .bs-kk{font-size:8px;text-transform:uppercase;letter-spacing:.02em;color:#8a8ea6;font-weight:700;margin-top:2px;line-height:1.15;}"
     +".bs-mkamp .bs-cardh{font-size:12.5px;margin-bottom:3px;}.bs-mkamp .bs-lb{gap:5px;}"
     +".viz-anl{display:block;}";
     var st=document.createElement("style"); st.id="viz-css"; st.textContent=css; document.head.appendChild(st);
