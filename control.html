@@ -232,6 +232,7 @@ function renderRunning(){
     if(m.phase!=="ended"){h+='<span class="sp" style="margin-left:auto;"></span><span class="timer" id="timer"></span>';}
     h+='</h2>';
     h+='<div class="board-wrap">'+(window.VIZ?VIZ.boardSVG(m,{}):boardSVG(m))+'</div>';
+    if(window.VIZ){ h+='<div class="segwrap" id="metricSeg" style="margin-top:8px;"><span class="sub" style="margin-right:6px;">Map bars:</span><button type="button" class="segb'+(VIZ.getMetric()==="stock"?" on":"")+'" data-metric="stock">Stock</button><button type="button" class="segb'+(VIZ.getMetric()==="orders"?" on":"")+'" data-metric="orders">Orders</button></div>'; }
     h+='<div class="sub" style="margin-top:8px;">Market total this week: <b>'+m.weekTotal+'</b> · announced next week: <b>'+m.nextTotal+'</b>. Solid links = own chain (cheaper). Dashed = rival chain (dearer)'+(window.VIZ?'. Bars in each box = that stage’s stock over time':'')+'.</div>';
     if(m.phase!=="ended"){h+=submissionProgress(m);}
     h+='</div>';
@@ -490,6 +491,7 @@ function wireRunning(ended){
   var sh=document.getElementById("shockbtn"); if(sh)sh.onclick=function(){toast("Tip: set next-week demand via Settings, or let the built-in shocks fire in weeks 5–12.");};
   var cs=document.getElementById("csend"); if(cs)cs.onclick=function(){var i=document.getElementById("cmsg");if(i.value.trim()){client.send("chat",{to:"ALL",text:i.value.trim()});i.value="";}};
   document.querySelectorAll(".viz-tabbar [data-viz]").forEach(function(t){ t.onclick=function(){ vizView=t.getAttribute("data-viz"); renderRunning(); }; });
+  document.querySelectorAll("#metricSeg [data-metric]").forEach(function(bb){ bb.onclick=function(){ if(window.VIZ){ VIZ.setMetric(bb.getAttribute("data-metric")); renderRunning(); } }; });
   var pb=document.getElementById("presentBtn"); if(pb&&window.VIZ) pb.onclick=function(){ VIZ.openBigScreen(function(){return {markets:MARKETS,order:order};},{}); };
 }
 

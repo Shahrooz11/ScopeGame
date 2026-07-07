@@ -112,20 +112,6 @@
 </head>
 <body class="depth-restructure font-montserrat">
 
-<div class="switch"><div class="in">
-  <span class="lbl">Layout</span>
-  <div class="seg" id="depthSeg">
-    <button data-d="refresh">Refresh</button>
-    <button data-d="restructure" class="on">Restructure</button>
-  </div>
-  <span class="lbl" style="margin-left:6px;">Font</span>
-  <div class="seg" id="fontSeg">
-    <button data-f="system">System</button>
-    <button data-f="montserrat" class="on">Montserrat</button>
-  </div>
-  <span class="spacer">Compare styles live &rarr;</span>
-</div></div>
-
 <div class="wm">
   <div class="brand"><span class="mk"></span><span class="nm">SCOPE Game &middot; RMIT</span></div>
   <div class="hero">
@@ -286,23 +272,6 @@
 </div>
 
 <script>
-(function(){
-  function seg(id,attr,cls){
-    var box=document.getElementById(id);
-    Array.prototype.forEach.call(box.querySelectorAll("button"),function(b){
-      b.onclick=function(){
-        Array.prototype.forEach.call(box.querySelectorAll("button"),function(x){x.classList.remove("on");});
-        b.classList.add("on");
-        var v=b.getAttribute(attr);
-        document.body.classList.remove(cls+"refresh",cls+"restructure",cls+"system",cls+"montserrat");
-        document.body.classList.add(cls+v);
-      };
-    });
-  }
-  seg("depthSeg","data-d","depth-");
-  seg("fontSeg","data-f","font-");
-})();
-
 (function(){
   var NS="http://www.w3.org/2000/svg", C1="#2f6fb0", C2="#d0443f", NAVY="#0b1b3f";
   var W=940,H=300,colX=[95,285,475,665,850],yTop=110,yBot=225,roff=42,NW=96,NH=54;

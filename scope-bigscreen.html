@@ -78,7 +78,7 @@ body{font-family:Montserrat,system-ui,sans-serif;background:#00021c;color:#fff;m
           var gain = t2==="R"?1.0 : (1.15 + rng()*0.5);        // upstream over-reacts (bullwhip)
           var noise = t2==="R" ? 24 : 95;                      // and orders noisier upstream
           var order = Math.max(0, Math.round(downSig*gain + (rng()-0.5)*noise));
-          n._lastOrder=order;
+          n._lastOrder=order; n.order=order;                 // expose per-node order for the Stock/Orders toggle
           n.ordersIn = Math.round(downSig);
           n.submittedOrder=true;
         });
@@ -120,7 +120,7 @@ body{font-family:Montserrat,system-ui,sans-serif;background:#00021c;color:#fff;m
   function state(){ return { markets:MARKETS, order:order }; }
 
   // open the big screen and drive it
-  VIZ.openBigScreen(state, { cycleMs: 9000 });   // auto-cycle markets every 9s
+  VIZ.openBigScreen(state, { cycle:true, cycleMs: 9000 });   // auto-cycle markets every 9s (toggle in the header)
   // record histories + advance the sim on a clock
   var tick=0;
   function loop(){

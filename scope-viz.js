@@ -26,15 +26,26 @@
   function isC1(n){ return n.chain===1||n.chain===0; }   // control convention: chain 1 = top/blue
   function tierIcon(t,color,size,x,y){ var sc=(size||22)/24; return '<g transform="translate('+x+' '+y+') scale('+sc+')" fill="none" stroke="'+color+'" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+(ICONS[t]||"")+'</g>'; }
 
-  /* ---- per-node inventory history (server sends only current inv) ---- */
-  var HIST = {};   // marketId -> { len, nodes:{ id:[inv,...] } }
+  /* ---- per-node history (server sends only current state; we accumulate) ---- */
+  var HIST = {};        // marketId -> { len, hasOrd, nodes:{ id:{inv:[],ord:[]} } }
+  var METRIC = 'stock'; // 'stock' | 'orders' — which metric the map bars show
+  function orderVal(n){  // opportunistic: use a per-node order field if the server sends one
+    if(typeof n.order==='number') return n.order;
+    if(n.order && typeof n.order.own==='number') return n.order.own+(n.order.cross||0);
+    if(typeof n.lastOrder==='number') return n.lastOrder;
+    if(typeof n.orderQty==='number') return n.orderQty;
+    return null;
+  }
   function record(m){
     if(!m||!m.marketId||!m.history) return;
     var len=m.history.length, s=HIST[m.marketId];
-    if(!s || len<s.len){ s={len:0,nodes:{}}; HIST[m.marketId]=s; }   // fresh / reset
-    if(len>s.len){ (m.nodes||[]).forEach(function(n){ (s.nodes[n.id]=s.nodes[n.id]||[]).push(Math.round(n.inv||0)); if(s.nodes[n.id].length>40)s.nodes[n.id].shift(); }); s.len=len; }
+    if(!s || len<s.len){ s={len:0,hasOrd:false,nodes:{}}; HIST[m.marketId]=s; }   // fresh / reset
+    if(len>s.len){ (m.nodes||[]).forEach(function(n){ var e=s.nodes[n.id]=(s.nodes[n.id]||{inv:[],ord:[]});
+      e.inv.push(Math.round(n.inv||0)); var ov=orderVal(n); if(ov!=null){ e.ord.push(Math.round(ov)); s.hasOrd=true; } else e.ord.push(null);
+      if(e.inv.length>40){ e.inv.shift(); e.ord.shift(); } }); s.len=len; }
   }
-  function nodeHist(m,id){ var s=HIST[m.marketId]; return (s&&s.nodes[id])||[]; }
+  function nodeHist(m,id,key){ var s=HIST[m.marketId], e=s&&s.nodes[id]; if(!e)return []; return (key==='ord'?e.ord:e.inv); }
+  function marketHasOrders(m){ var s=HIST[m.marketId]; return !!(s&&s.hasOrd); }
 
   /* ---- network map with per-node live bars (inventory history) ---- */
   function boardSVG(m, opts){
@@ -42,7 +53,11 @@
     var nodes=m.nodes||[], W=980, H=500, colX=[112,306,500,694,872], yTop=178, yBot=394, roff=50, NW=112, NH=90;
     var meId=opts.me||null, focus=opts.focus||null;
     function pos(n){ if(n.tier==="R"){var mine=nodes.filter(function(x){return x.tier==="R"&&x.chain===n.chain;});var k=mine.indexOf(n);var base=isC1(n)?yTop:yBot;var off=mine.length>1?(k===0?-roff:roff):0;return{x:colX[4],y:base+off};} return{x:colX[{S:0,M:1,D:2,W:3}[n.tier]],y:isC1(n)?yTop:yBot}; }
-    function barsSVG(n,leftX,rightX,base,accent){ var K=12,ser=nodeHist(m,n.id); if(!ser.length)return ''; ser=ser.slice(-K);
+    function barsSVG(n,leftX,rightX,base,accent){ var K=12;
+      var useOrd=(METRIC==='orders' && marketHasOrders(m));
+      var ser=nodeHist(m,n.id, useOrd?'ord':'inv').filter(function(v){return v!=null;});
+      if(!ser.length && useOrd) ser=nodeHist(m,n.id,'inv').filter(function(v){return v!=null;});   // graceful fallback
+      if(!ser.length)return ''; ser=ser.slice(-K);
       var mv=1; ser.forEach(function(v){ if(v>mv)mv=v; });
       var x0=leftX+12,x1=rightX-12,availW=x1-x0,HB=17,pitch=availW/K,bw=Math.max(2.4,pitch-1.5),out='',L=ser.length;
       ser.forEach(function(v,i){ var bh=Math.max(0.8,(v/mv)*HB),slot=K-L+i,bx=x0+slot*pitch+(pitch-bw)/2,last=(i===L-1);
@@ -177,9 +192,13 @@
     return '<div class="bs-wrap">'
       +'<div class="bs-top"><div class="bs-brand"><span class="bs-logo"></span> SCOPE <span class="bs-sub">live board</span></div>'
         +'<div class="bs-chips">'+chips+'</div>'
+        +'<div class="bs-tgs">'
+          +'<span class="bs-seg"><button class="bs-tg'+(METRIC==='stock'?' on':'')+'" data-metric="stock">Stock</button><button class="bs-tg'+(METRIC==='orders'?' on':'')+'" data-metric="orders">Orders</button></span>'
+          +'<button class="bs-tg cyc'+(BS.autoCycle?' on':'')+'" data-cycle>&#8635; Auto-cycle</button>'
+        +'</div>'
         +'<div class="bs-week">Week <b>'+m.week+'</b> / '+m.rounds+' <span class="bs-phase '+m.phase+'">'+esc(m.phase)+'</span></div></div>'
       +'<div class="bs-main">'
-        +'<div class="bs-mapcard"><div class="bs-cardh">Market '+esc(sel)+' · network <span class="bs-mut">bars = each stage’s stock over time — watch them swing upstream</span></div>'+boardSVG(m,{})+'</div>'
+        +'<div class="bs-mapcard"><div class="bs-cardh">Market '+esc(sel)+' · network <span class="bs-mut">bars = each stage’s '+((METRIC==='orders'&&marketHasOrders(m))?'weekly orders':'stock over time')+' — watch them swing upstream</span></div>'+boardSVG(m,{})+'</div>'
         +'<div class="bs-side">'
           +'<div class="bs-kpis"><div class="bs-kpi"><div class="bs-kv">'+sc.serviceLevel+'%</div><div class="bs-kk">Service</div></div>'
             +'<div class="bs-kpi"><div class="bs-kv" style="color:#7fb0e6">'+money(sc.chainProfit[0])+'</div><div class="bs-kk">Chain 1</div></div>'
@@ -230,6 +249,12 @@
     +".bs-chips{display:flex;gap:8px;flex-wrap:wrap;}"
     +".bs-chip{cursor:pointer;font-size:14px;font-weight:700;padding:7px 15px;border-radius:100px;background:rgba(255,255,255,.09);color:#c9cff0;border:1px solid rgba(255,255,255,.14);}"
     +".bs-chip.on{background:#fff;color:"+NAVY+";}"
+    +".bs-tgs{display:flex;gap:8px;align-items:center;}"
+    +".bs-seg{display:inline-flex;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);border-radius:100px;padding:3px;}"
+    +".bs-tg{cursor:pointer;font-size:13px;font-weight:700;padding:6px 13px;border-radius:100px;background:transparent;color:#c9cff0;border:0;font-family:inherit;}"
+    +".bs-seg .bs-tg.on{background:#fff;color:"+NAVY+";}"
+    +".bs-tg.cyc{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);color:#c9cff0;}"
+    +".bs-tg.cyc.on{background:"+C1+";border-color:"+C1+";color:#fff;}"
     +".bs-week{margin-left:auto;font-size:20px;font-weight:700;color:#e7ebff;}.bs-week b{font-size:26px;}"
     +".bs-phase{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:4px 10px;border-radius:100px;margin-left:8px;vertical-align:middle;}"
     +".bs-phase.order{background:#fff3cd;color:#8a5a00;}.bs-phase.ship{background:#d1e7ff;color:#0b4f9e;}.bs-phase.ended{background:#e8e8ef;color:#333;}.bs-phase.lobby{background:#e6f6ee;color:"+GREEN+";}"
@@ -255,9 +280,16 @@
   }
 
   /* ---- big-screen controller (overlay lifecycle) ---- */
-  var BS={ el:null, get:null, sel:null, cycle:false, timer:null };
+  var BS={ el:null, get:null, sel:null, cycle:false, autoCycle:false, cycleMs:9000, timer:null };
+  function setAutoCycle(on){ BS.autoCycle=on; if(BS.timer){ clearInterval(BS.timer); BS.timer=null; }
+    if(on){ BS.timer=setInterval(function(){ BS.cycle=true; paintBS(); BS.cycle=false; }, BS.cycleMs); }
+    if(BS.el&&BS.el.classList.contains("show")) paintBS(); }
   function ensureOverlay(){ if(BS.el) return BS.el; injectCSS(); var d=document.createElement("div"); d.id="viz-bigscreen"; document.body.appendChild(d); BS.el=d;
-    d.addEventListener("click",function(e){ var c=e.target.closest&&e.target.closest(".bs-chip[data-mkt]"); if(c){ BS.sel=c.getAttribute("data-mkt"); BS.cycle=false; if(BS.timer){clearInterval(BS.timer);BS.timer=null;} paintBS(); } var x=e.target.closest&&e.target.closest("[data-bs-close]"); if(x){ closeBS(); } });
+    d.addEventListener("click",function(e){ var cl=function(s){ return e.target.closest&&e.target.closest(s); };
+      var c=cl(".bs-chip[data-mkt]"); if(c){ BS.sel=c.getAttribute("data-mkt"); setAutoCycle(false); paintBS(); return; }
+      var mt=cl("[data-metric]"); if(mt){ METRIC=mt.getAttribute("data-metric"); paintBS(); return; }
+      var cy=cl("[data-cycle]"); if(cy){ setAutoCycle(!BS.autoCycle); return; }
+      var x=cl("[data-bs-close]"); if(x){ closeBS(); } });
     document.addEventListener("keydown",function(e){ if(e.key==="Escape"&&BS.el&&BS.el.classList.contains("show")) closeBS(); });
     return d;
   }
@@ -266,11 +298,13 @@
     if(BS.cycle){ var i=order.indexOf(BS.sel); BS.sel=order[(i+1)%order.length]; }
     BS.el.innerHTML='<button data-bs-close class="bs-chip" style="position:fixed;top:16px;right:18px;z-index:2">Close ✕</button>'+bigScreenHTML(markets,order,BS.sel);
   }
-  function openBS(getState, opts){ opts=opts||{}; ensureOverlay(); BS.get=getState; BS.cycle=false; document.body.classList.add("bs-open"); BS.el.classList.add("show"); paintBS();
-    if(BS.timer)clearInterval(BS.timer); if(opts.cycleMs){ BS.timer=setInterval(function(){ BS.cycle=true; paintBS(); BS.cycle=false; },opts.cycleMs); } }
+  function openBS(getState, opts){ opts=opts||{}; ensureOverlay(); BS.get=getState; BS.cycle=false; BS.cycleMs=opts.cycleMs||BS.cycleMs||9000;
+    document.body.classList.add("bs-open"); BS.el.classList.add("show"); paintBS(); setAutoCycle(!!opts.cycle); }
   function refreshBS(){ if(BS.el&&BS.el.classList.contains("show")) paintBS(); }
   function closeBS(){ if(BS.timer){clearInterval(BS.timer);BS.timer=null;} if(BS.el)BS.el.classList.remove("show"); document.body.classList.remove("bs-open"); }
   function bsOpen(){ return !!(BS.el&&BS.el.classList.contains("show")); }
 
-  root.VIZ={ record:record, boardSVG:boardSVG, analyticsHTML:analyticsHTML, compareHTML:compareHTML, winnersHTML:winnersHTML, bigScreenHTML:bigScreenHTML, injectCSS:injectCSS, openBigScreen:openBS, refreshBigScreen:refreshBS, closeBigScreen:closeBS, bigScreenOpen:bsOpen, esc:esc, money:money, colors:{C1:C1,C2:C2,NAVY:NAVY,RED:RED} };
+  root.VIZ={ record:record, boardSVG:boardSVG, analyticsHTML:analyticsHTML, compareHTML:compareHTML, winnersHTML:winnersHTML, bigScreenHTML:bigScreenHTML, injectCSS:injectCSS, openBigScreen:openBS, refreshBigScreen:refreshBS, closeBigScreen:closeBS, bigScreenOpen:bsOpen,
+    setMetric:function(mm){ METRIC=mm; if(BS.el&&BS.el.classList.contains("show"))paintBS(); }, getMetric:function(){ return METRIC; }, hasOrders:marketHasOrders,
+    esc:esc, money:money, colors:{C1:C1,C2:C2,NAVY:NAVY,RED:RED} };
 })(window);
