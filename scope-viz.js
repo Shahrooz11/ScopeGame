@@ -23,6 +23,7 @@
   };
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
   function money(v){ v=Math.round(v||0); return (v<0?"-$":"$")+Math.abs(v).toLocaleString(); }
+  function moneyK(v){ v=Math.round(v||0); var a=Math.abs(v), s=(v<0?"-$":"$"); return a>=1000 ? s+(a/1000).toFixed(1).replace(/\.0$/,'')+"k" : s+a; }
   function isC1(n){ return n.chain===1||n.chain===0; }   // control convention: chain 1 = top/blue
   function tierIcon(t,color,size,x,y){ var sc=(size||22)/24; return '<g transform="translate('+x+' '+y+') scale('+sc+')" fill="none" stroke="'+color+'" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+(ICONS[t]||"")+'</g>'; }
 
@@ -51,7 +52,7 @@
   function boardSVG(m, opts){
     opts=opts||{};
     var nodes=m.nodes||[], W=980, H=500, colX=[112,306,500,694,872], yTop=178, yBot=394, roff=50, NW=112, NH=90;
-    var meId=opts.me||null, focus=opts.focus||null;
+    var meId=opts.me||null, focus=opts.focus||null, big=opts.big;
     function pos(n){ if(n.tier==="R"){var mine=nodes.filter(function(x){return x.tier==="R"&&x.chain===n.chain;});var k=mine.indexOf(n);var base=isC1(n)?yTop:yBot;var off=mine.length>1?(k===0?-roff:roff):0;return{x:colX[4],y:base+off};} return{x:colX[{S:0,M:1,D:2,W:3}[n.tier]],y:isC1(n)?yTop:yBot}; }
     function barsSVG(n,leftX,rightX,base,accent){ var K=12;
       var useOrd=(METRIC==='orders' && marketHasOrders(m));
@@ -91,9 +92,9 @@
         +'<rect x="'+left+'" y="'+top+'" width="'+NW+'" height="6" rx="3" fill="'+accent+'"/>'
         +tierIcon(n.tier,accent,28,left+9,top+9)
         +'<text x="'+(right-12)+'" y="'+(top+25)+'" text-anchor="end" font-size="18" font-weight="800" fill="'+accent+'">'+esc(n.id)+'</text>'
-        +'<text x="'+(left+13)+'" y="'+(top+51)+'" font-size="27" font-weight="800" fill="#0f1024">'+inv+'</text>'
-        +'<text x="'+(left+14)+'" y="'+(top+61)+'" font-size="9" font-weight="700" fill="#9aa3b5" letter-spacing=".05em">ON HAND</text>'
-        +'<circle cx="'+(right-15)+'" cy="'+(top+50)+'" r="6" fill="'+hc+'"/>'
+        +'<text x="'+(left+13)+'" y="'+(top+(big?56:51))+'" font-size="'+(big?34:27)+'" font-weight="800" fill="#0f1024">'+inv+'</text>'
+        +(big?'':'<text x="'+(left+14)+'" y="'+(top+61)+'" font-size="9" font-weight="700" fill="#9aa3b5" letter-spacing=".05em">ON HAND</text>')
+        +'<circle cx="'+(right-15)+'" cy="'+(top+50)+'" r="'+(big?7:6)+'" fill="'+hc+'"/>'
         +barsSVG(n,left,right,top+84,accent)
         +((n.seat&&!n.seat.bot&&n.seat.name)?'<text x="'+p.x+'" y="'+(top-6)+'" text-anchor="middle" font-size="11" font-weight="700" fill="#5a6178">'+esc((n.seat.name||"").split(" ")[0])+'</text>':'')
         +(me?'<text x="'+p.x+'" y="'+(top-6)+'" text-anchor="middle" font-size="11" font-weight="800" fill="'+NAVY+'">YOU</text>':'')+'</g>';
@@ -195,13 +196,13 @@
         +'<span class="bs-mtimer" data-deadline="'+(m.deadline==null?'null':m.deadline)+'" data-phase="'+esc(m.phase)+'"></span>'
       +'</div>'
       +'<div class="bs-mkkpis">'
-        +'<div class="bs-kpi big"><div class="bs-kv">'+(m.weekTotal||0)+'</div><div class="bs-kk">Demand · wk</div></div>'
+        +'<div class="bs-kpi big"><div class="bs-kv">'+(m.weekTotal||0)+'</div><div class="bs-kk">Demand</div></div>'
         +'<div class="bs-kpi"><div class="bs-kv">'+sc.serviceLevel+'%</div><div class="bs-kk">Service</div></div>'
-        +'<div class="bs-kpi"><div class="bs-kv" style="color:#7fb0e6">'+money(sc.chainProfit[0])+'</div><div class="bs-kk">Chain 1</div></div>'
-        +'<div class="bs-kpi"><div class="bs-kv" style="color:#f28f8a">'+money(sc.chainProfit[1])+'</div><div class="bs-kk">Chain 2</div></div>'
-        +'<div class="bs-kpi"><div class="bs-kv" style="color:#e88ea0">'+bwRatio(m).toFixed(1)+'x</div><div class="bs-kk">Bullwhip</div></div>'
+        +'<div class="bs-kpi"><div class="bs-kv" style="color:#3f7fbf">'+moneyK(sc.chainProfit[0])+'</div><div class="bs-kk">Chain 1</div></div>'
+        +'<div class="bs-kpi"><div class="bs-kv" style="color:#d0605c">'+moneyK(sc.chainProfit[1])+'</div><div class="bs-kk">Chain 2</div></div>'
+        +'<div class="bs-kpi"><div class="bs-kv" style="color:#d0605c">'+bwRatio(m).toFixed(1)+'x</div><div class="bs-kk">Bullwhip</div></div>'
       +'</div>'
-      +'<div class="bs-mkmap">'+boardSVG(m,{})+'</div>'
+      +'<div class="bs-mkmap">'+boardSVG(m,{big:true})+'</div>'
       +'<div class="bs-mkamp"><div class="bs-cardh">Order amplification'+(ordOn?' <span class="bs-mut">(map bars show orders)</span>':'')+'</div>'+amp+'</div>'
       +'<div class="bs-mkamp"><div class="bs-cardh">Leaderboard</div><div class="bs-lb">'+lead+'</div></div>'
     +'</div>';
@@ -293,8 +294,8 @@
     +".bs-mkwk{font-size:12px;font-weight:700;color:#8a8ea6;white-space:nowrap;}"
     +".bs-mtimer{margin-left:auto;font-size:16px;font-weight:800;color:"+NAVY+";font-variant-numeric:tabular-nums;}"
     +".bs-mtimer.low{color:"+RED+";}.bs-mtimer.nolimit{color:#9aa3b5;font-size:12.5px;font-weight:700;}"
-    +".bs-mkkpis{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,.85fr);gap:6px;}"
-    +".bs-mkkpis .bs-kpi{background:#f6f8fd;border-radius:11px;padding:7px 4px;text-align:center;box-shadow:none;overflow:hidden;min-width:0;}"
+    +".bs-mkkpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;}"
+    +".bs-mkkpis .bs-kpi{background:#f6f8fd;border-radius:11px;padding:7px 3px;text-align:center;box-shadow:none;min-width:0;}"
     +".bs-mkkpis .bs-kpi.big{background:#eaf1ff;}"
     +".bs-mkkpis .bs-kv{font-size:16px;font-weight:800;color:"+NAVY+";white-space:nowrap;}.bs-mkkpis .bs-kpi.big .bs-kv{font-size:21px;}"
     +".bs-mkkpis .bs-kk{font-size:8px;text-transform:uppercase;letter-spacing:.02em;color:#8a8ea6;font-weight:700;margin-top:2px;line-height:1.15;}"
